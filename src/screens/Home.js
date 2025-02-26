@@ -4,7 +4,7 @@ export default function Home() {
     return (
         <View >
             <Text>Uba meka hdapan Nishu</Text>
-            <Text>Umbaaaaaaaa</Text>
+            <Text>*******************</Text>
         </View>
     );
 };
