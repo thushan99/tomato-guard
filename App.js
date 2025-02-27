@@ -41,7 +41,7 @@ const MainTabs = () => {
 
               return <Icon name={iconName} size={size} color={color} />;
             },
-            tabBarActiveTintColor: '#e53935',
+            tabBarActiveTintColor: '#388E3C',
             tabBarInactiveTintColor: 'gray',
             tabBarStyle: {
               backgroundColor: '#fff',
@@ -118,7 +118,7 @@ const App = () => {
               options={{
                 title: 'Weed Identification',
                 headerStyle: {
-                  backgroundColor: '#e53935',
+                  backgroundColor: '#4CAF50',
                 },
                 headerTintColor: '#fff',
               }}
@@ -129,7 +129,7 @@ const App = () => {
               options={{
                 title: 'Farmer Community',
                 headerStyle: {
-                  backgroundColor: '#e53935',
+                  backgroundColor: '#4CAF50',
                 },
                 headerTintColor: '#fff',
               }}

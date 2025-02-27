@@ -72,34 +72,34 @@ const ProfileScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Preferences</Text>
+                {/*<View style={styles.section}>*/}
+                {/*    <Text style={styles.sectionTitle}>Preferences</Text>*/}
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Icon name="earth" size={24} color="#2196F3" style={styles.menuIcon} />
-                        <Text style={styles.menuText}>Language</Text>
-                        <View style={styles.menuValue}>
-                            <Text style={styles.valueText}>English</Text>
-                            <Icon name="chevron-right" size={24} color="#bdbdbd" />
-                        </View>
-                    </TouchableOpacity>
+                {/*    <TouchableOpacity style={styles.menuItem}>*/}
+                {/*        <Icon name="earth" size={24} color="#2196F3" style={styles.menuIcon} />*/}
+                {/*        <Text style={styles.menuText}>Language</Text>*/}
+                {/*        <View style={styles.menuValue}>*/}
+                {/*            <Text style={styles.valueText}>English</Text>*/}
+                {/*            <Icon name="chevron-right" size={24} color="#bdbdbd" />*/}
+                {/*        </View>*/}
+                {/*    </TouchableOpacity>*/}
 
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Icon name="weather-sunny" size={24} color="#FF9800" style={styles.menuIcon} />
-                        <Text style={styles.menuText}>Climate Zone</Text>
-                        <View style={styles.menuValue}>
-                            <Text style={styles.valueText}>Zone 9b</Text>
-                            <Icon name="chevron-right" size={24} color="#bdbdbd" />
-                        </View>
-                    </TouchableOpacity>
-                </View>
+                {/*    <TouchableOpacity style={styles.menuItem}>*/}
+                {/*        <Icon name="weather-sunny" size={24} color="#FF9800" style={styles.menuIcon} />*/}
+                {/*        <Text style={styles.menuText}>Climate Zone</Text>*/}
+                {/*        <View style={styles.menuValue}>*/}
+                {/*            <Text style={styles.valueText}>Zone 9b</Text>*/}
+                {/*            <Icon name="chevron-right" size={24} color="#bdbdbd" />*/}
+                {/*        </View>*/}
+                {/*    </TouchableOpacity>*/}
+                {/*</View>*/}
 
                 <TouchableOpacity style={styles.logoutButton}>
-                    <Icon name="logout" size={20} color="#e53935" />
+                    <Icon name="logout" size={20} color="#000" />
                     <Text style={styles.logoutText}>Log Out</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.versionText}>Version 1.0.0</Text>
+                {/*<Text style={styles.versionText}>Version 1.0.0</Text>*/}
             </View>
         </ScrollView>
     );
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     header: {
-        backgroundColor: '#e53935',
+        backgroundColor: '#388E3C',
         paddingBottom: 20,
     },
     headerTop: {
@@ -238,15 +238,15 @@ const styles = StyleSheet.create({
     logoutText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#e53935',
+        color: '#000',
         marginLeft: 8,
     },
-    versionText: {
-        textAlign: 'center',
-        fontSize: 12,
-        color: '#9e9e9e',
-        marginBottom: 20,
-    },
+    // versionText: {
+    //     textAlign: 'center',
+    //     fontSize: 12,
+    //     color: '#9e9e9e',
+    //     marginBottom: 20,
+    // },
 });
 
 export default ProfileScreen;

@@ -144,12 +144,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     header: {
-        backgroundColor: '#e53935',
-        paddingTop: 60,
+        backgroundColor: '#388E3C',
+        paddingTop: 20,
         paddingBottom: 20,
         paddingHorizontal: 20,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
+
     },
     headerTitle: {
         fontSize: 28,
@@ -218,7 +217,7 @@ const styles = StyleSheet.create({
     versionText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#e53935',
+        color: '#000',
         marginBottom: 4,
     },
     copyrightText: {

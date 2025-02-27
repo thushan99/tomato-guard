@@ -8,7 +8,6 @@ import {
     ScrollView,
     ActivityIndicator,
     Modal,
-    // TextInput,
     Platform,
     PermissionsAndroid
 } from 'react-native';
@@ -17,7 +16,6 @@ import { Picker } from '@react-native-picker/picker';
 import Geolocation from 'react-native-geolocation-service';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 // import BluetoothSerial from 'react-native-bluetooth-serial';
-// import WeedScreen from "./WeedScreen";
 
 const WeedIdentificationScreen = () => {
     const [analyzing, setAnalyzing] = useState(false);
@@ -38,11 +36,20 @@ const WeedIdentificationScreen = () => {
     const [humidity, setHumidity] = useState(null);
     const [connectingToIoT, setConnectingToIoT] = useState(false);
     const [iotConnected, setIotConnected] = useState(false);
+    const [bluetoothConnection, setBluetoothConnection] = useState(null);
 
     // Get location when component mounts
     useEffect(() => {
         requestLocationPermission();
-    }, []);
+
+        // Cleanup function for bluetooth connection
+        return () => {
+            if (bluetoothConnection) {
+                BluetoothSerial.removeListener('read');
+                BluetoothSerial.disconnect();
+            }
+        };
+    }, [bluetoothConnection]);
 
     const requestLocationPermission = async () => {
         if (Platform.OS === 'android') {
@@ -89,7 +96,7 @@ const WeedIdentificationScreen = () => {
                 console.log('User cancelled camera');
             } else if (response.error) {
                 console.log('Camera Error: ', response.error);
-            } else {
+            } else if (response.assets && response.assets.length > 0) {
                 setImage(response.assets[0]);
                 setShowImageSelectionModal(false);
             }
@@ -111,7 +118,7 @@ const WeedIdentificationScreen = () => {
                 console.log('User cancelled image picker');
             } else if (response.error) {
                 console.log('ImagePicker Error: ', response.error);
-            } else {
+            } else if (response.assets && response.assets.length > 0) {
                 setImage(response.assets[0]);
                 setShowImageSelectionModal(false);
             }
@@ -137,40 +144,48 @@ const WeedIdentificationScreen = () => {
 
             if (esp32Device) {
                 // Connect to the device
-                await BluetoothSerial.connect(esp32Device.id);
+                const connection = await BluetoothSerial.connect(esp32Device.id);
+                setBluetoothConnection(connection);
 
-                // Start listening for data
-                BluetoothSerial.on('read', (data) => {
-                    try {
-                        const sensorData = JSON.parse(data);
-                        setTemperature(sensorData.temperature);
-                        setHumidity(sensorData.humidity);
-                    } catch (error) {
-                        console.log('Error parsing data:', error);
-                    }
-                });
+                // Only set up the event listener if connection was successful
+                if (connection) {
+                    // Clear any existing listeners to avoid duplicates
+                    BluetoothSerial.removeListener('read');
 
-                setIotConnected(true);
-            } else {
-                // Simulate connection for demo purposes (REMOVE IN PRODUCTION)
-                setTimeout(() => {
-                    setTemperature(27.5);
-                    setHumidity(65.2);
+                    // Add new listener
+                    BluetoothSerial.on('read', (data) => {
+                        try {
+                            const sensorData = JSON.parse(data);
+                            setTemperature(sensorData.temperature);
+                            setHumidity(sensorData.humidity);
+                        } catch (error) {
+                            console.log('Error parsing data:', error);
+                        }
+                    });
+
                     setIotConnected(true);
-                }, 1500);
+                }
+            } else {
+                console.log('ESP32-DHT11 device not found');
+                // Simulate connection for demo purposes (REMOVE IN PRODUCTION)
+                simulateIoTConnection();
             }
         } catch (error) {
             console.log('Error connecting to IoT device:', error);
-
             // Simulate connection for demo purposes (REMOVE IN PRODUCTION)
-            setTimeout(() => {
-                setTemperature(27.5);
-                setHumidity(65.2);
-                setIotConnected(true);
-            }, 1500);
+            simulateIoTConnection();
         } finally {
             setConnectingToIoT(false);
         }
+    };
+
+    // Helper function to simulate IoT connection for testing
+    const simulateIoTConnection = () => {
+        setTimeout(() => {
+            setTemperature(27.5);
+            setHumidity(65.2);
+            setIotConnected(true);
+        }, 1500);
     };
 
     // Reset all form data
@@ -250,10 +265,10 @@ const WeedIdentificationScreen = () => {
 
     return (
         <ScrollView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Weed Identification</Text>
-                <Text style={styles.headerSubtitle}>Identify and treat unwanted plants</Text>
-            </View>
+            {/*<View style={styles.header}>*/}
+            {/*    /!*<Text style={styles.headerTitle}>Weed Identification</Text>*!/*/}
+            {/*    <Text style={styles.headerSubtitle}>Identify and treat unwanted plants</Text>*/}
+            {/*</View>*/}
 
             <View style={styles.content}>
                 {/* Image Section */}
@@ -543,11 +558,9 @@ const styles = StyleSheet.create({
     },
     header: {
         backgroundColor: '#4CAF50',
-        paddingTop: 60,
+        paddingTop: 20,
         paddingBottom: 20,
         paddingHorizontal: 20,
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
     },
     headerTitle: {
         fontSize: 28,
@@ -879,9 +892,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'flex-end',
+        alignItems: 'center',
     },
     modalContent: {
         backgroundColor: '#fff',
+        width: '100%',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
@@ -893,6 +908,41 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         textAlign: 'center',
     },
+    modalOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 8,
+        backgroundColor: '#f5f5f5',
+        marginBottom: 12,
+    },
+    modalOptionText: {
+        fontSize: 16,
+        color: '#333',
+        marginLeft: 12,
+    },
+    cancelButton: {
+        padding: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        color: '#e53935',
+        fontWeight: 'bold',
+    },
+    advancedSettingsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 8,
+    },
+    advancedSettingsText: {
+        color: '#4CAF50',
+        fontSize: 14,
+        marginLeft: 4,
+    }
 });
 
 export default WeedIdentificationScreen;

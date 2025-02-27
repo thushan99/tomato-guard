@@ -291,8 +291,8 @@ const styles = StyleSheet.create({
         borderColor: '#e0e0e0',
     },
     activeFilter: {
-        backgroundColor: '#e53935',
-        borderColor: '#e53935',
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
     },
     filterText: {
         fontSize: 13,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 30,
-        backgroundColor: '#e53935',
+        backgroundColor: '#4CAF50',
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 5,

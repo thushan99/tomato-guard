@@ -78,7 +78,7 @@ const HomeScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <StatusBar backgroundColor="#e53935" barStyle="light-content" />
+            <StatusBar backgroundColor="#388E3C" barStyle="light-content" />
 
             {/* Header */}
             <View style={styles.header}>
@@ -96,7 +96,7 @@ const HomeScreen = ({ navigation }) => {
             {/* Weather Summary */}
             <View style={styles.weatherContainer}>
                 <View style={styles.weatherInfo}>
-                    <Icon name="weather-partly-cloudy" size={30} color="#e53935" />
+                    <Icon name="weather-partly-cloudy" size={30} color="#388E3C" />
                     <View style={styles.weatherTextContainer}>
                         <Text style={styles.weatherTemp}>24°C</Text>
                         <Text style={styles.weatherDesc}>Partly Cloudy</Text>
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     header: {
-        backgroundColor: '#e53935',
+        backgroundColor: '#388E3C',
         paddingHorizontal: 20,
         paddingTop: 40,
         paddingBottom: 20,
