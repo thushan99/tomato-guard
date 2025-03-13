@@ -13,7 +13,6 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
-    "expo": "~52.0.37",
     "expo-camera": "^16.0.17",
     "expo-linear-gradient": "^14.0.2",
     "expo-status-bar": "~2.0.1",
@@ -27,7 +26,8 @@
     "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "expo": "^52.0.38"
   },
   "private": true
 }
