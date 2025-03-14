@@ -14,9 +14,9 @@ import SettingsScreen from './src/screens/SettingsScreen';
 // import PestDetectionScreen from './src/screens/PestDetectionScreen';
 // import DiseaseScreen from './src/screens/DiseaseScreen';
 // import HarvestScreen from './src/screens/HarvestScreen';
-// import WeedScreen from './src/screens/WeedScreen';
-import WeedIdentificationScreen from './src/screens/WeedIdentificationScreen';
+import WeedScreen from './src/screens/WeedScreen';
 import ForumScreen from './src/screens/ForumScreen';
+import HerbicideReportScreen from './src/screens/HerbicideReportScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,7 +114,7 @@ const App = () => {
           {/*/>*/}
           <Stack.Screen
               name="Weed"
-              component={WeedIdentificationScreen}
+              component={WeedScreen}
               options={{
                 title: 'Weed Identification',
                 headerStyle: {
@@ -123,6 +123,7 @@ const App = () => {
                 headerTintColor: '#fff',
               }}
           />
+          <Stack.Screen name="HerbicideReportScreen" component={HerbicideReportScreen} />
           <Stack.Screen
               name="Forum"
               component={ForumScreen}
