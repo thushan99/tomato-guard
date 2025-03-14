@@ -81,7 +81,7 @@ const App = () => {
           />
           {/*<Stack.Screen*/}
           {/*    name="PestDetection"*/}
-          {/*    component={PestDetectionScreen}*/}
+          {/*    components={PestDetectionScreen}*/}
           {/*    options={{*/}
           {/*      title: 'Pest Detection',*/}
           {/*      headerStyle: {*/}
@@ -92,7 +92,7 @@ const App = () => {
           {/*/>*/}
           {/*<Stack.Screen*/}
           {/*    name="Disease"*/}
-          {/*    component={DiseaseScreen}*/}
+          {/*    components={DiseaseScreen}*/}
           {/*    options={{*/}
           {/*      title: 'Disease Diagnosis',*/}
           {/*      headerStyle: {*/}
@@ -103,7 +103,7 @@ const App = () => {
           {/*/>*/}
           {/*<Stack.Screen*/}
           {/*    name="Harvest"*/}
-          {/*    component={HarvestScreen}*/}
+          {/*    components={HarvestScreen}*/}
           {/*    options={{*/}
           {/*      title: 'Smart Harvest',*/}
           {/*      headerStyle: {*/}

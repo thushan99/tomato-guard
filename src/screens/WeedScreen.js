@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, SafeAreaView, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import Header from '../component/weedComponents/Header';
-import ImageCapture from '../component/weedComponents/ImageCapture';
-import SoilTypeSelector from '../component/weedComponents/SoilTypeSelector';
-import GrowthStageSelector from '../component/weedComponents/GrowthStageSelector';
-import DeviceConnection from '../component/weedComponents/DeviceConnection';
-import SubmitButton from '../component/weedComponents/SubmitButton';
+import Header from '../components/weedComponents/Header';
+import ImageCapture from '../components/weedComponents/ImageCapture';
+import SoilTypeSelector from '../components/weedComponents/SoilTypeSelector';
+import GrowthStageSelector from '../components/weedComponents/GrowthStageSelector';
+import DeviceConnection from '../components/weedComponents/DeviceConnection';
+import SubmitButton from '../components/weedComponents/SubmitButton';
 
 const WeedScreen = () => {
    
