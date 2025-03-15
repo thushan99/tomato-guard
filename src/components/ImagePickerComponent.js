@@ -1,35 +1,47 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   View,
   TouchableOpacity,
   Text,
   StyleSheet,
-  ActivityIndicator,
   Modal,
+  Alert,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
-import axios from "axios"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
-const ImagePickerComponent = ({
-  fetchWeatherData,
-  setDiseaseResult,
-  setFertilizerRecommendation,
-  setAlertMessage,
-  setImage,
-  theme = "disease", // Default to disease theme
-}) => {
-  const [loading, setLoading] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false) // State for modal visibility
+const ImagePickerComponent = ({ setImage, identifyDisease, setLoading }) => {
+  const [modalVisible, setModalVisible] = useState(false)
+  const [permissionGranted, setPermissionGranted] = useState(false)
 
-  // Define color themes
-  const colors =
-    theme === "pest"
-      ? { primary: "#FF9800", dark: "#F57C00", modalIcon: "#FF9800" }
-      : { primary: "#4CAF50", dark: "#388E3C", modalIcon: "#4CAF50" } // Default is disease theme
+  useEffect(() => {
+    ;(async () => {
+      const { status: mediaLibraryStatus } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync()
+      const { status: cameraStatus } =
+        await ImagePicker.requestCameraPermissionsAsync()
+
+      if (mediaLibraryStatus !== "granted" || cameraStatus !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "You need to allow access to the camera and gallery to continue."
+        )
+      } else {
+        setPermissionGranted(true)
+      }
+    })()
+  }, [])
 
   const openCamera = async () => {
-    setModalVisible(false) // Close modal before opening camera
+    setModalVisible(false)
+    if (!permissionGranted) {
+      Alert.alert(
+        "Permission Required",
+        "Please allow camera access in settings."
+      )
+      return
+    }
+
     let result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
@@ -37,14 +49,22 @@ const ImagePickerComponent = ({
     })
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri)
-      fetchWeatherData()
-      identifyDisease(result.assets[0].uri)
+      const imageUri = result.assets[0].uri
+      setImage(imageUri)
+      identifyDisease(imageUri)
     }
   }
 
   const openGallery = async () => {
-    setModalVisible(false) // Close modal before opening gallery
+    setModalVisible(false)
+    if (!permissionGranted) {
+      Alert.alert(
+        "Permission Required",
+        "Please allow gallery access in settings."
+      )
+      return
+    }
+
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -53,42 +73,17 @@ const ImagePickerComponent = ({
     })
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri)
-      fetchWeatherData()
-      identifyDisease(result.assets[0].uri)
+      const imageUri = result.assets[0].uri
+      setImage(imageUri)
+      identifyDisease(imageUri)
     }
-  }
-
-  const identifyDisease = async imageUri => {
-    setLoading(true)
-    const formData = new FormData()
-    formData.append("file", {
-      uri: imageUri,
-      name: "image.jpg",
-      type: "image/jpeg",
-    })
-
-    try {
-      const response = await axios.post(
-        "http://your-backend-api/disease-identification",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      )
-
-      setDiseaseResult(response.data.disease)
-      setAlertMessage(response.data.alert)
-      setFertilizerRecommendation(response.data.fertilizer)
-    } catch (error) {
-      console.error("Error identifying disease:", error)
-    }
-    setLoading(false)
   }
 
   return (
     <View style={styles.container}>
       {/* Capture Image Button */}
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: colors.primary }]}
+        style={styles.button}
         onPress={() => setModalVisible(true)}
       >
         <MaterialCommunityIcons
@@ -108,31 +103,19 @@ const ImagePickerComponent = ({
 
             {/* Take a Photo */}
             <TouchableOpacity style={styles.modalOption} onPress={openCamera}>
-              <MaterialCommunityIcons
-                name="camera"
-                size={26}
-                color={colors.modalIcon}
-              />
-              <Text style={[styles.modalText, { color: colors.dark }]}>
-                Take a Photo
-              </Text>
+              <MaterialCommunityIcons name="camera" size={26} color="#4CAF50" />
+              <Text style={styles.modalText}>Take a Photo</Text>
             </TouchableOpacity>
 
             {/* Choose from Gallery */}
             <TouchableOpacity style={styles.modalOption} onPress={openGallery}>
-              <MaterialCommunityIcons
-                name="image"
-                size={26}
-                color={colors.modalIcon}
-              />
-              <Text style={[styles.modalText, { color: colors.dark }]}>
-                Choose from Gallery
-              </Text>
+              <MaterialCommunityIcons name="image" size={26} color="#4CAF50" />
+              <Text style={styles.modalText}>Choose from Gallery</Text>
             </TouchableOpacity>
 
             {/* Close Modal */}
             <TouchableOpacity
-              style={[styles.closeButton, { backgroundColor: colors.dark }]}
+              style={styles.closeButton}
               onPress={() => setModalVisible(false)}
             >
               <Text style={styles.closeButtonText}>Cancel</Text>
@@ -140,8 +123,6 @@ const ImagePickerComponent = ({
           </View>
         </View>
       </Modal>
-
-      {loading && <ActivityIndicator size="large" color={colors.primary} />}
     </View>
   )
 }
@@ -157,11 +138,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 3, // For Android shadow
+    backgroundColor: "#4CAF50",
   },
   buttonIcon: {
     marginRight: 8,
@@ -175,7 +152,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     backgroundColor: "white",
@@ -183,7 +160,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: 320,
     alignItems: "center",
-    elevation: 5,
   },
   modalTitle: {
     fontSize: 20,
@@ -211,6 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: "90%",
     alignItems: "center",
+    backgroundColor: "#4CAF50",
   },
   closeButtonText: {
     color: "white",
