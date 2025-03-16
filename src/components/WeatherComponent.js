@@ -71,16 +71,16 @@ const WeatherComponent = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.iconContainer}>
-        <MaterialCommunityIcons
-          name={weatherIcon.name}
-          size={50}
-          color={weatherIcon.color}
-        />
-        <Text style={styles.conditionText}>{weatherData.condition}</Text>
-      </View>
-
       <View style={styles.weatherInfo}>
+        <View style={styles.weatherBox}>
+          <MaterialCommunityIcons
+            name={weatherIcon.name}
+            size={30}
+            color={weatherIcon.color}
+          />
+          <Text style={styles.conditionText}>{weatherData.condition}</Text>
+        </View>
+
         <View style={styles.weatherBox}>
           <MaterialCommunityIcons
             name="thermometer"
@@ -108,14 +108,14 @@ const WeatherComponent = () => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#FFF",
-    padding: 15,
+    padding: 5,
     borderRadius: 12,
     elevation: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
-    margin: 20,
+    margin: 10,
     alignItems: "center",
   },
   iconContainer: {
@@ -123,31 +123,25 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   conditionText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginTop: 5,
+    marginLeft: 10,
   },
   weatherInfo: {
     flexDirection: "row",
     justifyContent: "space-around",
     width: "100%",
-    padding: 10,
-    gap: 5,
+    padding: 5,
   },
   weatherBox: {
     alignItems: "center",
-    backgroundColor: "#F3F3F3",
-    padding: 15,
-    borderRadius: 10,
+    padding: 5,
     width: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   label: {
     fontSize: 14,
+    fontWeight: "bold",
     color: "#666",
     marginTop: 8,
   },

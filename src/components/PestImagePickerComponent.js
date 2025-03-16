@@ -5,15 +5,17 @@ import {
   Text,
   StyleSheet,
   Image,
-  Modal,
   Alert,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
-const ImagePickerComponent = ({ setImage, identifyDisease }) => {
+const PestImagePickerComponent = ({
+  setImage,
+  identifyPest,
+  captureFromIoT,
+}) => {
   const [imageUri, setImageUri] = useState(null)
-  const [modalVisible, setModalVisible] = useState(false)
   const [permissionGranted, setPermissionGranted] = useState(false)
 
   useEffect(() => {
@@ -46,7 +48,7 @@ const ImagePickerComponent = ({ setImage, identifyDisease }) => {
       const uri = result.assets[0].uri
       setImageUri(uri)
       setImage(uri)
-      identifyDisease(uri)
+      identifyPest(uri)
     }
   }
 
@@ -61,7 +63,7 @@ const ImagePickerComponent = ({ setImage, identifyDisease }) => {
       const uri = result.assets[0].uri
       setImageUri(uri)
       setImage(uri)
-      identifyDisease(uri)
+      identifyPest(uri)
     }
   }
 
@@ -76,7 +78,7 @@ const ImagePickerComponent = ({ setImage, identifyDisease }) => {
             <MaterialCommunityIcons
               name="image-plus"
               size={40}
-              color="#4CAF50"
+              color="#FF9800"
             />
             <Text style={styles.uploadText}>Upload from Gallery</Text>
           </TouchableOpacity>
@@ -96,6 +98,20 @@ const ImagePickerComponent = ({ setImage, identifyDisease }) => {
         />
         <Text style={styles.buttonText}>Capture Image</Text>
       </TouchableOpacity>
+
+      {/* Capture from IoT Button */}
+      <TouchableOpacity
+        style={styles.captureIoTButton}
+        onPress={captureFromIoT}
+      >
+        <MaterialCommunityIcons
+          name="chip"
+          size={24}
+          color="white"
+          style={styles.buttonIcon}
+        />
+        <Text style={styles.buttonText}>Capture from IoT</Text>
+      </TouchableOpacity>
     </View>
   )
 }
@@ -108,7 +124,7 @@ const styles = StyleSheet.create({
     width: 350,
     height: 250,
     borderWidth: 2,
-    borderColor: "#4CAF50",
+    borderColor: "#FF9800",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -126,7 +142,7 @@ const styles = StyleSheet.create({
   },
   uploadText: {
     fontSize: 16,
-    color: "#4CAF50",
+    color: "#FF9800",
     marginTop: 5,
   },
   separator: {
@@ -141,7 +157,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#FF9800",
+    width: 350,
+    marginBottom: 10,
+  },
+  captureIoTButton: {
+    flexDirection: "row",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#00796B",
     width: 350,
   },
   buttonIcon: {
@@ -154,4 +180,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ImagePickerComponent
+export default PestImagePickerComponent

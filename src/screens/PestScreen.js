@@ -1,45 +1,90 @@
 import React, { useState } from "react"
-import { View, Text, StyleSheet } from "react-native"
-import ImagePickerComponent from "../components/ImagePickerComponent" // Import the component
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Image,
+  ActivityIndicator,
+  Text,
+} from "react-native"
+import LottieView from "lottie-react-native"
+import axios from "axios"
+
+import PestImagePickerComponent from "../components/PestImagePickerComponent"
 
 const PestScreen = () => {
-  // State variables to manage image selection and results
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [pestResult, setPestResult] = useState("")
-  const [alertMessage, setAlertMessage] = useState("")
-  const [fertilizerRecommendation, setFertilizerRecommendation] = useState("")
+  const [pestResult, setPestResult] = useState(null)
+  const [alertMessage, setAlertMessage] = useState(null)
+  const [fertilizerRecommendation, setFertilizerRecommendation] = useState(null)
+  const [image, setImage] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  // Function to handle additional data fetching if required
-  const fetchPestData = () => {
-    console.log("Fetching pest-related data...")
+  // Function to identify pests from the uploaded image
+  const identifyPest = async imageUri => {
+    setLoading(true)
+    setError(null)
+
+    const formData = new FormData()
+    formData.append("image", {
+      uri: imageUri,
+      name: "image.jpg",
+      type: "image/jpeg",
+    })
+
+    try {
+      const response = await axios.post(
+        "http://192.168.8.123:5000/predict_pest",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      )
+
+      if (response.data) {
+        setPestResult(response.data.predicted_pest)
+        setFertilizerRecommendation(response.data.fertilizer)
+        setAlertMessage(response.data.alert)
+      } else {
+        setError("No data returned from backend.")
+      }
+    } catch (err) {
+      console.error("Error identifying pest:", err)
+      setError("Error identifying pest. Please try again.")
+    }
+    setLoading(false)
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Pest Identification</Text>
-
-      {/* Image Picker Component */}
-      <ImagePickerComponent
-        fetchWeatherData={fetchPestData}
-        setDiseaseResult={setPestResult}
-        setFertilizerRecommendation={setFertilizerRecommendation}
-        setAlertMessage={setAlertMessage}
-        setImage={setSelectedImage}
-        theme="pest"
-      />
-
-      {/* Display Results */}
-      {pestResult ? (
-        <Text style={styles.resultText}>Pest: {pestResult}</Text>
-      ) : null}
-      {alertMessage ? (
-        <Text style={styles.alertText}>{alertMessage}</Text>
-      ) : null}
-      {fertilizerRecommendation ? (
-        <Text style={styles.recommendationText}>
-          Fertilizer: {fertilizerRecommendation}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* Title with Waving Hand Emoji */}
+        <Text style={styles.title}>
+          👋 Hey Farmer, Shield Your Crops with Smart Detection!
         </Text>
-      ) : null}
+
+        {/* Image Picker Component */}
+        <PestImagePickerComponent
+          setPestResult={setPestResult}
+          setFertilizerRecommendation={setFertilizerRecommendation}
+          setAlertMessage={setAlertMessage}
+          setImage={setImage}
+          identifyPest={identifyPest}
+        />
+
+        {/* Show Loading Indicator while Identifying Pest */}
+        {loading ? (
+          <ActivityIndicator size="large" color="#FF9800" />
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : (
+          pestResult && (
+            <PestResultComponent
+              pestResult={pestResult}
+              alertMessage={alertMessage}
+              fertilizerRecommendation={fertilizerRecommendation}
+            />
+          )
+        )}
+      </ScrollView>
     </View>
   )
 }
@@ -47,31 +92,37 @@ const PestScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
     padding: 20,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#E8F5E9",
+  },
+  scrollContainer: {
+    alignItems: "center",
+    paddingBottom: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 30,
     fontWeight: "bold",
+    color: "black",
+    textAlign: "center",
     marginBottom: 20,
-    color: "#333",
   },
-  resultText: {
-    fontSize: 18,
-    marginTop: 10,
-    color: "#ff6347",
+  image: {
+    width: "100%",
+    height: 250,
+    resizeMode: "contain",
+    marginBottom: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#FF9800",
   },
-  alertText: {
-    fontSize: 16,
+  lottie: {
+    width: 450,
+    height: 550,
+  },
+  errorText: {
     color: "red",
-    marginTop: 5,
-  },
-  recommendationText: {
     fontSize: 16,
-    color: "green",
-    marginTop: 5,
+    marginTop: 10,
   },
 })
 

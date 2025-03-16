@@ -18,6 +18,8 @@
     "expo-image-picker": "^16.0.6",
     "expo-linear-gradient": "^14.0.2",
     "expo-status-bar": "~2.0.1",
+    "lottie-ios": "^4.5.1",
+    "lottie-react-native": "^7.2.2",
     "react": "18.3.1",
     "react-native": "0.76.7",
     "react-native-bluetooth-serial": "^1.0.0-rc1",
@@ -26,6 +28,7 @@
     "react-native-image-picker": "^8.1.0",
     "react-native-modal": "^14.0.0-rc.1",
     "react-native-progress": "^5.0.1",
+    "react-native-reanimated": "^3.17.1",
     "react-native-safe-area-context": "^5.2.0",
     "react-native-vector-icons": "^10.2.0"
   },
