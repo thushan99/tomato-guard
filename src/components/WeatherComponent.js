@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react"
-import { View, Text, StyleSheet } from "react-native"
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import axios from "axios"
 
 const WeatherComponent = () => {
   const [weatherData, setWeatherData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const API_KEY = "48b1307218c54026ba6143246240212"
   const LOCATION = "Colombo"
@@ -23,10 +24,10 @@ const WeatherComponent = () => {
         humidity: data.current.humidity,
         location: data.location.name,
       })
-
       setLoading(false)
     } catch (error) {
       console.error("Error fetching weather data: ", error)
+      setError("Failed to load weather data. Please try again later.")
       setLoading(false)
     }
   }
@@ -36,7 +37,17 @@ const WeatherComponent = () => {
   }, [])
 
   if (loading) {
-    return <Text style={styles.loadingText}>Loading weather data...</Text>
+    return (
+      <ActivityIndicator
+        size="large"
+        color="#0000ff"
+        style={styles.loadingIndicator}
+      />
+    )
+  }
+
+  if (error) {
+    return <Text style={styles.errorText}>{error}</Text>
   }
 
   const getWeatherIcon = condition => {
@@ -145,11 +156,15 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 5,
   },
-  loadingText: {
+  loadingIndicator: {
+    marginTop: 20,
+  },
+  errorText: {
     fontSize: 16,
     fontStyle: "italic",
     textAlign: "center",
     marginTop: 20,
+    color: "red",
   },
 })
 

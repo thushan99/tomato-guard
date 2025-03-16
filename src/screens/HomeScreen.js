@@ -1,6 +1,4 @@
-// screens/HomeScreen.js
-
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -9,12 +7,15 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
+  Alert,
 } from "react-native"
 import Icon from "react-native-vector-icons/MaterialCommunityIcons"
 import { LinearGradient } from "expo-linear-gradient"
 
 const HomeScreen = ({ navigation }) => {
-  const [notificationCount, setNotificationCount] = useState(1) // Set initial count
+  const [notificationCount, setNotificationCount] = useState(0) // Set initial count
+  const [alertMessage, setAlertMessage] = useState("") // State to store alert message
+  const [alertData, setAlertData] = useState(null) // State to store detailed alert data
 
   const features = [
     {
@@ -59,6 +60,67 @@ const HomeScreen = ({ navigation }) => {
     },
   ]
 
+  const fetchAlertMessage = async () => {
+    try {
+      const response = await fetch("http://192.168.8.123:5000/get_alert")
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("API Response:", data)
+
+      if (data.alert_message && data.weather) {
+        setAlertMessage(
+          `📢 ${data.alert_message}\n🌡️ Temperature: ${data.weather.temperature}°C\n💧 Humidity: ${data.weather.humidity}%\n⚠️ Weather Alert: ${data.weather.condition}`
+        )
+        setAlertData(data)
+      } else {
+        console.error("Required data missing in API response")
+      }
+    } catch (error) {
+      console.error("Error fetching alert:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchAlertMessage() // Initial fetch
+
+    const interval = setInterval(() => {
+      fetchAlertMessage()
+    }, 30000) // Fetch every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const handleNotificationClick = () => {
+    if (alertMessage && alertData) {
+      Alert.alert("Alert", alertMessage, [
+        {
+          text: "OK",
+          onPress: () => console.log("Alert dismissed"),
+        },
+        {
+          text: "View Details",
+          onPress: () => {
+            Alert.alert(
+              "Alert Details",
+              `
+            🌦️ Weather: ${alertData.weather.condition}
+            💧 Humidity: ${alertData.weather.humidity}%
+            🌡️ Temperature: ${alertData.weather.temperature}°C
+            📍 City: ${alertData.city}
+            `
+            )
+          },
+        },
+      ])
+    } else {
+      Alert.alert("No Alerts", "There are no new weather alerts.")
+    }
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#388E3C" barStyle="light-content" />
@@ -71,7 +133,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
         <View style={styles.headerRight}>
           {/* Notification Icon with Badge */}
-          <TouchableOpacity onPress={() => alert("Notifications clicked!")}>
+          <TouchableOpacity onPress={handleNotificationClick}>
             <View style={styles.notificationIconContainer}>
               <Icon
                 name="bell"
@@ -79,15 +141,17 @@ const HomeScreen = ({ navigation }) => {
                 color="#fff"
                 style={styles.notificationIcon}
               />
+              {/* Display notification count if greater than 0 */}
               {notificationCount > 0 && (
                 <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationText}>
+                  <Text style={styles.notificationCountText}>
                     {notificationCount}
                   </Text>
                 </View>
               )}
             </View>
           </TouchableOpacity>
+
           <Image
             source={require("../assets/tomato.png")}
             style={styles.profileImage}
@@ -200,17 +264,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -5,
     right: -5,
-    backgroundColor: "#FF5722",
-    borderRadius: 10,
+    backgroundColor: "#FF4081",
     width: 20,
     height: 20,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  notificationText: {
+  notificationCountText: {
+    color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
-    color: "#fff",
   },
   weatherContainer: {
     backgroundColor: "#fff",
@@ -277,21 +341,31 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginTop: 10,
   },
-  featureDesc: { fontSize: 14, color: "#fff", marginTop: 6 },
-  tipsContainer: {
+  featureDesc: { fontSize: 14, color: "#fff", marginTop: 4 },
+  tipsContainer: { marginTop: 20 },
+  tipCard: {
     backgroundColor: "#fff",
-    margin: 16,
-    borderRadius: 12,
     padding: 16,
+    borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  tipCard: { flexDirection: "row", alignItems: "center" },
-  tipIcon: { marginRight: 12 },
-  tipText: { fontSize: 16, color: "#333", flex: 1 },
+  tipIcon: { marginRight: 10 },
+  tipText: { fontSize: 14, color: "#333" },
+  alertContainer: {
+    backgroundColor: "#FF4081",
+    padding: 16,
+    margin: 16,
+    borderRadius: 12,
+  },
+  alertText: {
+    fontSize: 20,
+    color: "#fff",
+    fontWeight: "bold",
+  },
 })
 
 export default HomeScreen
