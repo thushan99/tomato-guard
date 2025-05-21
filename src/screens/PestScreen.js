@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native"
-import LottieView from "lottie-react-native"
 import axios from "axios"
 
 import PestImagePickerComponent from "../components/PestImagePickerComponent"
