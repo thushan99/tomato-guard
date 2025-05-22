@@ -1,101 +1,171 @@
-import React from "react"
-import { View, Text, StyleSheet } from "react-native"
+import { useNavigation } from "@react-navigation/native"
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 import Icon from "react-native-vector-icons/FontAwesome5"
 
 const DiseaseResultComponent = ({
   diseaseResult,
-  // alertMessage,
   fertilizerRecommendation,
   dosage,
+  onAddFertilizer,
 }) => {
+  const navigation = useNavigation()
+
   if (!diseaseResult) return null
 
+  const handleCancel = () => {
+    navigation.goBack()
+  }
+
   return (
-    <View style={styles.resultContainer}>
+    <View style={styles.card}>
+      {/* Header */}
+      <Text style={styles.reportTitle}>Disease Diagnosis Report</Text>
+      <Text style={styles.reportSubtitle}>
+        Below are the results based on image analysis
+      </Text>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
       {/* Disease Name */}
-      <View style={styles.row}>
-        <Icon name="seedling" size={28} color="#C34A2C" />
-        <Text style={[styles.resultText, styles.diseaseText]}>
-          Disease: {diseaseResult}
-        </Text>
+      <View style={styles.section}>
+        <View style={styles.iconCircleRed}>
+          <Icon name="virus" size={18} color="#fff" />
+        </View>
+        <Text style={styles.sectionTextMain}>{diseaseResult}</Text>
       </View>
 
       {/* Fertilizer Recommendation */}
       {fertilizerRecommendation && (
-        <View style={styles.row}>
-          <Icon name="sprout" size={28} color="#FF9800" />
-          <Text style={[styles.resultText, styles.fertilizerText]}>
-            Fertilizer: {fertilizerRecommendation}
+        <View style={styles.section}>
+          <View style={styles.iconCircleOrange}>
+            <Icon name="seedling" size={18} color="#fff" />
+          </View>
+          <Text style={styles.sectionText}>
+            <Text style={styles.bold}>Fertilizer: </Text>
+            {fertilizerRecommendation}
           </Text>
         </View>
       )}
 
       {/* Dosage Information */}
       {dosage && (
-        <View style={styles.row}>
-          <Icon name="cogs" size={28} color="#4CAF50" />
-          <Text style={[styles.resultText, styles.dosageText]}>
-            Dosage: {dosage}
+        <View style={styles.section}>
+          <View style={styles.iconCircleGreen}>
+            <Icon name="cogs" size={18} color="#fff" />
+          </View>
+          <Text style={styles.sectionText}>
+            <Text style={styles.bold}>Dosage: </Text>
+            {dosage}
           </Text>
         </View>
       )}
 
-      {/* Alert Message */}
-      {/* Uncomment and pass alertMessage prop if needed */}
-      {/* {alertMessage && (
-        <View style={styles.row}>
-          <Icon name="exclamation-circle" size={28} color="#D32F2F" />
-          <Text style={[styles.resultText, styles.alertText]}>
-            Alert: {alertMessage}
-          </Text>
-        </View>
-      )} */}
+      {/* Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.addButton} onPress={onAddFertilizer}>
+          <Text style={styles.buttonText}>➕ Add Fertilizer</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+          <Text style={styles.buttonText}>✖ Cancel</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  resultContainer: {
+  card: {
     marginTop: 20,
-    backgroundColor: "#ffffff",
-    padding: 20,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: "#4CAF50",
-    width: "90%",
+    backgroundColor: "#fff",
+    padding: 22,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#ECECEC",
+    width: "92%",
     alignSelf: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  resultText: {
+  reportTitle: {
     fontSize: 20,
     fontWeight: "700",
-    marginLeft: 15,
+    color: "#111827",
+    marginBottom: 4,
   },
-  diseaseText: {
-    color: "#C34A2C",
-    fontSize: 22,
-    fontWeight: "900",
+  reportSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 16,
   },
-  alertText: {
-    color: "#D32F2F",
-    fontSize: 20,
+  divider: {
+    height: 1,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 16,
   },
-  fertilizerText: {
-    color: "#FF9800",
-    fontSize: 20,
+  section: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
   },
-  dosageText: {
-    color: "#4CAF50",
-    fontSize: 20,
+  sectionText: {
+    fontSize: 16,
+    marginLeft: 12,
+    color: "#374151",
+    flexShrink: 1,
+  },
+  sectionTextMain: {
+    fontSize: 18,
+    marginLeft: 12,
+    color: "#E53935",
+    fontWeight: "700",
+  },
+  iconCircleRed: {
+    backgroundColor: "#E53935",
+    borderRadius: 20,
+    padding: 10,
+  },
+  iconCircleOrange: {
+    backgroundColor: "#FB8C00",
+    borderRadius: 20,
+    padding: 10,
+  },
+  iconCircleGreen: {
+    backgroundColor: "#388E3C",
+    borderRadius: 20,
+    padding: 10,
+  },
+  bold: {
+    fontWeight: "700",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 24,
+  },
+  addButton: {
+    flex: 1,
+    backgroundColor: "#4CAF50",
+    paddingVertical: 14,
+    marginRight: 8,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "#F44336",
+    paddingVertical: 14,
+    marginLeft: 8,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 })
 

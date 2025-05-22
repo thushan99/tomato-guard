@@ -112,6 +112,8 @@ const DiseaseScreen = () => {
               alertMessage={alertMessage}
               fertilizerRecommendation={fertilizerRecommendation}
               dosage={dosage}
+              // onAddFertilizer={() => console.log("Fertilizer added")}
+              // onCancel={() => console.log("Cancelled")}
             />
           )
         )}
