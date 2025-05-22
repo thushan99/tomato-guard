@@ -1,10 +1,10 @@
 import React from "react"
 import { View, Text, StyleSheet } from "react-native"
-import Icon from "react-native-vector-icons/FontAwesome5" // Changed to FontAwesome5
+import Icon from "react-native-vector-icons/FontAwesome5"
 
 const DiseaseResultComponent = ({
   diseaseResult,
-  alertMessage,
+  // alertMessage,
   fertilizerRecommendation,
   dosage,
 }) => {
@@ -14,7 +14,7 @@ const DiseaseResultComponent = ({
     <View style={styles.resultContainer}>
       {/* Disease Name */}
       <View style={styles.row}>
-        <Icon name="seedling" size={28} color="#388E3C" />
+        <Icon name="seedling" size={28} color="#C34A2C" />
         <Text style={[styles.resultText, styles.diseaseText]}>
           Disease: {diseaseResult}
         </Text>
@@ -33,8 +33,7 @@ const DiseaseResultComponent = ({
       {/* Dosage Information */}
       {dosage && (
         <View style={styles.row}>
-          <Icon name="cogs" size={28} color="#4CAF50" />{" "}
-          {/* Cogs icon for dosage */}
+          <Icon name="cogs" size={28} color="#4CAF50" />
           <Text style={[styles.resultText, styles.dosageText]}>
             Dosage: {dosage}
           </Text>
@@ -42,14 +41,15 @@ const DiseaseResultComponent = ({
       )}
 
       {/* Alert Message */}
-      {alertMessage && (
+      {/* Uncomment and pass alertMessage prop if needed */}
+      {/* {alertMessage && (
         <View style={styles.row}>
           <Icon name="exclamation-circle" size={28} color="#D32F2F" />
           <Text style={[styles.resultText, styles.alertText]}>
             Alert: {alertMessage}
           </Text>
         </View>
-      )}
+      )} */}
     </View>
   )
 }
@@ -57,45 +57,45 @@ const DiseaseResultComponent = ({
 const styles = StyleSheet.create({
   resultContainer: {
     marginTop: 20,
-    backgroundColor: "#ffffff", // White background for a clean modern look
+    backgroundColor: "#ffffff",
     padding: 20,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: "#4CAF50", // Green border for contrast
+    borderColor: "#4CAF50",
     width: "90%",
     alignSelf: "center",
-    shadowColor: "#000", // Adding shadow for a modern look
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
-    elevation: 5, // For Android shadow
+    elevation: 5,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15, // Increased spacing for a cleaner layout
+    marginBottom: 15,
   },
   resultText: {
-    fontSize: 20, // Larger font size
-    fontWeight: "700", // Bold font
+    fontSize: 20,
+    fontWeight: "700",
     marginLeft: 15,
   },
   diseaseText: {
-    color: "#388E3C", // Green color for disease name
-    fontSize: 22, // Larger size for the disease name
-    fontWeight: "900", // Bolder font for emphasis
+    color: "#C34A2C",
+    fontSize: 22,
+    fontWeight: "900",
   },
   alertText: {
-    color: "#D32F2F", // Red color for alert
-    fontSize: 20, // Adjusted font size for alert
+    color: "#D32F2F",
+    fontSize: 20,
   },
   fertilizerText: {
-    color: "#FF9800", // Orange color for fertilizer
-    fontSize: 20, // Adjusted font size for fertilizer
+    color: "#FF9800",
+    fontSize: 20,
   },
   dosageText: {
-    color: "#4CAF50", // Green color for dosage
-    fontSize: 20, // Adjusted font size for dosage
+    color: "#4CAF50",
+    fontSize: 20,
   },
 })
 
