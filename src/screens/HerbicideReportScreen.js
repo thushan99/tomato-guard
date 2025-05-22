@@ -1,196 +1,666 @@
-import React from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, Image, TouchableOpacity } from 'react-native';
+// Enhanced component for handling multiple plant detections
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, SafeAreaView, ScrollView, Image, TouchableOpacity, Share, Alert, Dimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons, Feather, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const HerbicideReportScreen = ({ route, navigation }) => {
-  // In a real app, this would come from route.params or API call
-  // For this example, we're using the sample data provided
-  const reportData = {
-    weed_name: "Black Nightshade",
-    herbicide_options: [
-      {
-        "herbicide name": "Glyphosate",
-        "herbicide application_rate": "2.5 L/ha",
-        "herbicide safe_for_tomato": false,
-        "herbicide mode_of_action": "Systemic",
-        "herbicide application_method": "Spray",
-        "growth_stage": "Early",
-        "soil_type": "Loamy",
-        "weather_constraints": "Low wind, no rain",
-        "herbicide resistance_reported": true,
-        "alternative herbicide": "Glufosinate"
-      }
-    ],
-    safety_precautions: {
-      toxicity: "High",
-      human_protection: "Wear gloves and mask",
-      environmental_precautions: "Avoid near water bodies"
-    }
-  };
+const { width: screenWidth } = Dimensions.get('window');
 
-  const handleShare = () => {
-    // Share functionality would be implemented here
-    alert('Share functionality will be implemented here');
-  };
+// Component for rendering detection boxes with different colors for different plant types
+const AnnotatedImage = ({ imageUri, detections, originalImageDimensions }) => {
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const imageDisplayWidth = screenWidth - 32;
 
-  const handleSave = () => {
-    // Save to database functionality would be implemented here
-    alert('Report saved successfully!');
-  };
-
-  const renderSafetyLevel = (level) => {
-    const getColor = () => {
-      switch (level.toLowerCase()) {
-        case 'high':
-          return '#FF5252';
-        case 'medium':
-          return '#FFC107';
-        case 'low':
-          return '#4CAF50';
-        default:
-          return '#9E9E9E';
-      }
+  // Color mapping for different plant types
+  const getColorForClass = (className) => {
+    const colorMap = {
+      'tomato': '#4CAF50',           // Green for crops
+      'ground_cherry': '#FF5722',    // Red for weeds
+      'cutleaf_nightshade': '#FF9800', // Orange for weeds
+      'default': '#F44336'           // Default red
     };
+    return colorMap[className] || colorMap.default;
+  };
 
+  useEffect(() => {
+    if (imageUri && imageUri !== "https://via.placeholder.com/400/320") {
+      setImageError(false);
+      setImageLoaded(false);
+
+      Image.getSize(
+          imageUri,
+          (width, height) => {
+            const aspectRatio = height / width;
+            const displayHeight = imageDisplayWidth * aspectRatio;
+            setImageDimensions({ width: imageDisplayWidth, height: displayHeight });
+            setImageLoaded(true);
+          },
+          (error) => {
+            console.error('Error getting image dimensions:', error);
+            setImageError(true);
+            setImageDimensions({ width: imageDisplayWidth, height: 300 });
+          }
+      );
+    } else {
+      // Handle placeholder or invalid URI
+      setImageError(true);
+      setImageDimensions({ width: imageDisplayWidth, height: 300 });
+    }
+  }, [imageUri]);
+
+  const renderDetectionBoxes = () => {
+    if (!detections || detections.length === 0 || !originalImageDimensions) {
+      return null;
+    }
+
+    return detections.map((detection, index) => {
+      const { bbox, confidence, className } = detection;
+      const scaleX = imageDimensions.width / originalImageDimensions.width;
+      const scaleY = imageDimensions.height / originalImageDimensions.height;
+
+      const scaledBox = {
+        left: bbox.x1 * scaleX,
+        top: bbox.y1 * scaleY,
+        width: (bbox.x2 - bbox.x1) * scaleX,
+        height: (bbox.y2 - bbox.y1) * scaleY,
+      };
+
+      const confidencePercent = (confidence * 100).toFixed(1);
+      const boxColor = getColorForClass(className);
+
+      return (
+          <View key={index}>
+            <View
+                style={[
+                  styles.boundingBox,
+                  {
+                    left: scaledBox.left,
+                    top: scaledBox.top,
+                    width: scaledBox.width,
+                    height: scaledBox.height,
+                    borderColor: boxColor,
+                  }
+                ]}
+            />
+            <View
+                style={[
+                  styles.detectionLabel,
+                  {
+                    left: scaledBox.left,
+                    top: Math.max(0, scaledBox.top - 25),
+                    backgroundColor: boxColor,
+                  }
+                ]}
+            >
+              <Text style={styles.detectionLabelText}>
+                {className} ({confidencePercent}%)
+              </Text>
+            </View>
+          </View>
+      );
+    });
+  };
+
+  // Show placeholder if no image or error
+  if (!imageUri || imageError || imageUri === "https://via.placeholder.com/400/320") {
     return (
-      <View style={[styles.safetyBadge, { backgroundColor: getColor() }]}>
-        <Text style={styles.safetyText}>{level} Risk</Text>
-      </View>
+        <View style={[styles.placeholderContainer, { height: 300 }]}>
+          <MaterialCommunityIcons name="image-off" size={50} color="#ccc" />
+          <Text style={styles.placeholderText}>
+            {!imageUri ? "No image available" : "Failed to load image"}
+          </Text>
+          <Text style={styles.placeholderSubtext}>
+            Please capture a new image to see detection results
+          </Text>
+          {detections && detections.length > 0 && (
+              <View style={styles.detectionListFallback}>
+                <Text style={styles.fallbackTitle}>Detected Plants:</Text>
+                {detections.slice(0, 3).map((detection, index) => (
+                    <Text key={index} style={styles.fallbackItem}>
+                      • {detection.className}: {(detection.confidence * 100).toFixed(1)}%
+                    </Text>
+                ))}
+                {detections.length > 3 && (
+                    <Text style={styles.fallbackMore}>
+                      ... and {detections.length - 3} more
+                    </Text>
+                )}
+              </View>
+          )}
+        </View>
     );
+  }
+
+  return (
+      <View style={styles.annotatedImageContainer}>
+        <Image
+            source={{ uri: imageUri }}
+            style={[
+              styles.annotatedImage,
+              {
+                width: imageDimensions.width,
+                height: imageDimensions.height,
+              }
+            ]}
+            resizeMode="contain"
+            onLoad={() => setImageLoaded(true)}
+            onError={(error) => {
+              console.error('Image load error:', error);
+              setImageError(true);
+            }}
+        />
+
+        {/* Loading indicator */}
+        {!imageLoaded && !imageError && (
+            <View style={[styles.loadingOverlay, {
+              width: imageDimensions.width,
+              height: imageDimensions.height
+            }]}>
+              <MaterialCommunityIcons name="loading" size={30} color="#666" />
+              <Text style={styles.loadingText}>Loading image...</Text>
+            </View>
+        )}
+
+        {/* Detection boxes overlay */}
+        {imageLoaded && (
+            <View style={StyleSheet.absoluteFillObject}>
+              {renderDetectionBoxes()}
+            </View>
+        )}
+      </View>
+  );
+};
+
+// Component for detection summary statistics
+const DetectionSummary = ({ detections }) => {
+  const getDetectionStats = () => {
+    const stats = {};
+    detections.forEach(detection => {
+      const className = detection.className;
+      if (!stats[className]) {
+        stats[className] = {
+          count: 0,
+          confidences: [],
+          avgConfidence: 0,
+          isCrop: className.toLowerCase().includes('tomato')
+        };
+      }
+      stats[className].count++;
+      stats[className].confidences.push(detection.confidence);
+    });
+
+    // Calculate average confidence for each class
+    Object.keys(stats).forEach(className => {
+      const confidences = stats[className].confidences;
+      stats[className].avgConfidence =
+          confidences.reduce((sum, conf) => sum + conf, 0) / confidences.length;
+    });
+
+    return stats;
+  };
+
+  const stats = getDetectionStats();
+  const totalDetections = detections.length;
+  const cropCount = Object.values(stats).filter(stat => stat.isCrop).reduce((sum, stat) => sum + stat.count, 0);
+  const weedCount = totalDetections - cropCount;
+
+  return (
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryHeader}>
+          <Text style={styles.summaryTitle}>Detection Summary</Text>
+          <View style={styles.totalBadge}>
+            <Text style={styles.totalBadgeText}>{totalDetections} Total</Text>
+          </View>
+        </View>
+
+        <View style={styles.summaryStats}>
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="sprout" size={24} color="#4CAF50" />
+            <Text style={styles.statNumber}>{cropCount}</Text>
+            <Text style={styles.statLabel}>Crops</Text>
+          </View>
+          <View style={styles.statItem}>
+            <MaterialCommunityIcons name="alert-circle" size={24} color="#FF5722" />
+            <Text style={styles.statNumber}>{weedCount}</Text>
+            <Text style={styles.statLabel}>Weeds</Text>
+          </View>
+        </View>
+
+        <View style={styles.detectionBreakdown}>
+          {Object.entries(stats).map(([className, stat]) => (
+              <View key={className} style={styles.breakdownItem}>
+                <View style={styles.breakdownHeader}>
+                  <View style={[
+                    styles.classIndicator,
+                    { backgroundColor: stat.isCrop ? '#4CAF50' : '#FF5722' }
+                  ]} />
+                  <Text style={styles.className}>
+                    {className.split('_').map(word =>
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                    ).join(' ')}
+                  </Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countText}>{stat.count}</Text>
+                  </View>
+                </View>
+                <Text style={styles.confidenceText}>
+                  Avg. Confidence: {(stat.avgConfidence * 100).toFixed(1)}%
+                </Text>
+              </View>
+          ))}
+        </View>
+      </View>
+  );
+};
+
+// Component for detailed detection list
+const DetectionDetailsList = ({ detections }) => {
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  const formatWeedName = (name) => {
+    return name.split('_').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  const getColorForClass = (className) => {
+    const colorMap = {
+      'tomato': '#4CAF50',
+      'ground_cherry': '#FF5722',
+      'cutleaf_nightshade': '#FF9800',
+      'default': '#F44336'
+    };
+    return colorMap[className] || colorMap.default;
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="light" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Herbicide Report</Text>
-        <TouchableOpacity onPress={handleShare}>
-          <Feather name="share-2" size={22} color="white" />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.detailsContainer}>
+        <Text style={styles.detailsTitle}>Individual Detections ({detections.length})</Text>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Weed Identification Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Weed Identification</Text>
-          </View>
-          <View style={styles.weedInfoContainer}>
-            <View style={styles.weedImageContainer}>
-              <Image 
-                source={{ uri: 'https://via.placeholder.com/150' }} 
-                style={styles.weedImage} 
-              />
-            </View>
-            <View style={styles.weedDetails}>
-              <Text style={styles.weedName}>{reportData.weed_name}</Text>
-              <View style={styles.detailRow}>
-                <Feather name="map-pin" size={16} color="#666" />
-                <Text style={styles.detailText}>Loamy Soil</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <MaterialCommunityIcons name="sprout" size={16} color="#666" />
-                <Text style={styles.detailText}>Early Growth Stage</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <MaterialCommunityIcons name="thermometer" size={16} color="#666" />
-                <Text style={styles.detailText}>24°C, 65% Humidity</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+        {detections.map((detection, index) => {
+          const isExpanded = expandedIndex === index;
+          const confidence = (detection.confidence * 100).toFixed(1);
+          const isCrop = detection.className.toLowerCase().includes('tomato');
+          const color = getColorForClass(detection.className);
 
-        {/* Herbicide Recommendations Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Recommended Herbicide</Text>
-          </View>
-          
-          {reportData.herbicide_options.map((option, index) => (
-            <View key={index} style={styles.herbicideContainer}>
-              <View style={styles.herbicideHeader}>
-                <Text style={styles.herbicideName}>{option["herbicide name"]}</Text>
-                {!option["herbicide safe_for_tomato"] && (
-                  <View style={styles.warningBadge}>
-                    <Text style={styles.warningText}>Not Safe for Tomato</Text>
+          return (
+              <TouchableOpacity
+                  key={index}
+                  style={styles.detectionItem}
+                  onPress={() => setExpandedIndex(isExpanded ? null : index)}
+              >
+                <View style={styles.detectionHeader}>
+                  <View style={styles.detectionInfo}>
+                    <View style={[styles.detectionIndicator, { backgroundColor: color }]} />
+                    <View style={styles.detectionText}>
+                      <Text style={styles.detectionName}>
+                        {formatWeedName(detection.className)}
+                      </Text>
+                      <Text style={styles.detectionConfidence}>
+                        {confidence}% confidence
+                      </Text>
+                    </View>
                   </View>
-                )}
-              </View>
-              
-              <View style={styles.infoGrid}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Application Rate</Text>
-                  <Text style={styles.infoValue}>{option["herbicide application_rate"]}</Text>
+                  <View style={styles.detectionActions}>
+                    {isCrop && (
+                        <View style={styles.cropBadge}>
+                          <Text style={styles.cropBadgeText}>CROP</Text>
+                        </View>
+                    )}
+                    <MaterialCommunityIcons
+                        name={isExpanded ? "chevron-up" : "chevron-down"}
+                        size={20}
+                        color="#666"
+                    />
+                  </View>
                 </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Mode of Action</Text>
-                  <Text style={styles.infoValue}>{option["herbicide mode_of_action"]}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Method</Text>
-                  <Text style={styles.infoValue}>{option["herbicide application_method"]}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Weather</Text>
-                  <Text style={styles.infoValue}>{option["weather_constraints"]}</Text>
-                </View>
-              </View>
-              
-              {option["herbicide resistance_reported"] && (
-                <View style={styles.resistanceWarning}>
-                  <MaterialCommunityIcons name="alert-circle" size={18} color="#F57C00" />
-                  <Text style={styles.resistanceText}>
-                    Resistance reported. Consider alternative: {option["alternative herbicide"]}
-                  </Text>
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
 
-        {/* Safety Precautions Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Safety Precautions</Text>
-            {renderSafetyLevel(reportData.safety_precautions.toxicity)}
-          </View>
-          
-          <View style={styles.safetyContainer}>
-            <View style={styles.safetyItem}>
-              <MaterialCommunityIcons name="account-alert" size={22} color="#555" />
-              <View style={styles.safetyContent}>
-                <Text style={styles.safetyLabel}>Human Protection</Text>
-                <Text style={styles.safetyValue}>{reportData.safety_precautions.human_protection}</Text>
+                {isExpanded && (
+                    <View style={styles.expandedContent}>
+                      <View style={styles.boundingBoxInfo}>
+                        <Text style={styles.expandedLabel}>Bounding Box:</Text>
+                        <Text style={styles.expandedValue}>
+                          Position: ({detection.bbox.x1.toFixed(0)}, {detection.bbox.y1.toFixed(0)})
+                        </Text>
+                        <Text style={styles.expandedValue}>
+                          Size: {detection.bbox.width.toFixed(0)} × {detection.bbox.height.toFixed(0)} px
+                        </Text>
+                      </View>
+                      <View style={styles.detectionAdvice}>
+                        <Text style={styles.expandedLabel}>
+                          {isCrop ? "Crop Management:" : "Weed Management:"}
+                        </Text>
+                        <Text style={styles.expandedValue}>
+                          {isCrop
+                              ? "This is a valuable crop plant. Provide proper care and avoid herbicide application."
+                              : "Consider targeted herbicide application for this weed species."
+                          }
+                        </Text>
+                      </View>
+                    </View>
+                )}
+              </TouchableOpacity>
+          );
+        })}
+      </View>
+  );
+};
+
+// Enhanced main component
+const HerbicideReportScreen = ({ route, navigation }) => {
+  const { reportData } = route.params || {};
+
+  // Use your actual data structure with better fallback handling
+  const data = reportData || {
+    weedName: "tomato",
+    confidence: 73.97066950798035,
+    soilType: "Loamy",
+    growthStage: "Early",
+    temperature: 25.5,
+    humidity: 65.0,
+    rainfall: 0.0,
+    windSpeed: 8.23,
+    predictedApplicationRate: 2.03,
+    predictedHerbicideName: "Atrazine",
+    capturedImageUri: null,
+    originalImageDimensions: { width: 1920, height: 1080 },
+    herbicideOptions: [
+      {
+        name: "Atrazine",
+        applicationRate: "2.03 L/ha",
+        safeForTomato: "false",
+        modeOfAction: "Systemic",
+        applicationMethod: "Spray",
+        weatherConstraints: "Low wind, favorable",
+        resistanceReported: "true",
+        alternativeHerbicide: "Glufosinate"
+      },
+      {
+        name: "Glufosinate",
+        applicationRate: "1.827 L/ha",
+        safeForTomato: "true",
+        modeOfAction: "Contact",
+        applicationMethod: "Spray",
+        weatherConstraints: "Low wind, favorable",
+        resistanceReported: "false",
+        alternativeHerbicide: "Paraquat"
+      }
+    ],
+    safetyPrecautions: {
+      toxicity: "High",
+      humanProtection: "Wear gloves and mask",
+      environmentalPrecautions: "Avoid near water bodies"
+    },
+    detectionInfo: {
+      detectionCount: 15,
+      detections: [
+        {
+          bbox: { height: 303.63, width: 388.66, x1: 550.66, x2: 939.32, y1: 1477.16, y2: 1780.80 },
+          classId: 2,
+          className: "tomato",
+          confidence: 0.7397066950798035
+        },
+        {
+          bbox: { height: 371.99, width: 340.18, x1: 1045.99, x2: 1386.17, y1: 177.40, y2: 549.40 },
+          classId: 2,
+          className: "tomato",
+          confidence: 0.7261600494384766
+        },
+        {
+          bbox: { height: 289.51, width: 404.27, x1: 547.77, x2: 952.04, y1: 1488.82, y2: 1778.33 },
+          classId: 1,
+          className: "ground_cherry",
+          confidence: 0.7072266936302185
+        }
+      ],
+      modelUsed: "YOLOv8x"
+    }
+  };
+
+  // Debug log to check the image URI
+  console.log('Image URI:', data.capturedImageUri);
+
+  const detections = data.detectionInfo?.detections || [];
+  const hasMultipleDetections = detections.length > 1;
+
+  const handleShare = async () => {
+    try {
+      const detectionSummary = detections.reduce((acc, detection) => {
+        const className = detection.className;
+        acc[className] = (acc[className] || 0) + 1;
+        return acc;
+      }, {});
+
+      const summaryText = Object.entries(detectionSummary)
+          .map(([className, count]) => `${className}: ${count}`)
+          .join('\n');
+
+      const shareMessage = `
+Multi-Plant Detection Report
+==========================
+Total Detections: ${detections.length}
+
+Plant Breakdown:
+${summaryText}
+
+Recommended Herbicide: ${data.predictedHerbicideName}
+Application Rate: ${data.predictedApplicationRate} L/ha
+
+Environmental Conditions:
+Temperature: ${data.temperature}°C
+Humidity: ${data.humidity}%
+Wind Speed: ${data.windSpeed} km/h
+
+Detection Model: ${data.detectionInfo?.modelUsed || 'Unknown'}
+      `;
+
+      await Share.share({
+        message: shareMessage,
+        title: "Multi-Plant Detection Report"
+      });
+    } catch (error) {
+      Alert.alert('Error', 'Failed to share report: ' + error.message);
+    }
+  };
+
+  return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="light" />
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+
+          {/* Enhanced Image Card with Detection Overlay */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>
+                {hasMultipleDetections ? 'Multi-Plant Detection' : 'Plant Detection'}
+              </Text>
+              <View style={styles.detectionCountBadge}>
+                <Text style={styles.detectionCountText}>
+                  {detections.length} detection(s)
+                </Text>
               </View>
             </View>
-            
-            <View style={styles.divider} />
-            
-            <View style={styles.safetyItem}>
-              <MaterialCommunityIcons name="pine-tree" size={22} color="#555" />
-              <View style={styles.safetyContent}>
-                <Text style={styles.safetyLabel}>Environmental Precautions</Text>
-                <Text style={styles.safetyValue}>{reportData.safety_precautions.environmental_precautions}</Text>
+            <View style={styles.imageSection}>
+              <AnnotatedImage
+                  imageUri={data.capturedImageUri}
+                  detections={detections}
+                  originalImageDimensions={data.originalImageDimensions || { width: 1920, height: 1080 }}
+              />
+
+              {/* Color Legend */}
+              <View style={styles.colorLegend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, { backgroundColor: '#4CAF50' }]} />
+                  <Text style={styles.legendText}>Crops</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, { backgroundColor: '#FF5722' }]} />
+                  <Text style={styles.legendText}>Weeds</Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-        
-        {/* Action Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Report</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Detection Summary Card */}
+          {hasMultipleDetections && (
+              <View style={styles.card}>
+                <DetectionSummary detections={detections} />
+              </View>
+          )}
+
+          {/* Individual Detections Card */}
+          <View style={styles.card}>
+            <DetectionDetailsList detections={detections} />
+          </View>
+
+          {/* Herbicide Recommendation Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Recommended Herbicide</Text>
+              <View style={styles.recommendationBadge}>
+                <Text style={styles.recommendationBadgeText}>AI Predicted</Text>
+              </View>
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.herbicideRecommendation}>
+                <View style={styles.primaryRecommendation}>
+                  <MaterialCommunityIcons name="spray" size={24} color="#2196F3" />
+                  <View style={styles.recommendationDetails}>
+                    <Text style={styles.herbicideName}>{data.predictedHerbicideName}</Text>
+                    <Text style={styles.applicationRate}>
+                      Application Rate: {data.predictedApplicationRate} L/ha
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Herbicide Options Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Herbicide Options ({data.herbicideOptions?.length || 0})</Text>
+            </View>
+            <View style={styles.cardContent}>
+              {data.herbicideOptions?.map((herbicide, index) => (
+                  <View key={index} style={styles.herbicideOption}>
+                    <View style={styles.herbicideHeader}>
+                      <Text style={styles.herbicideOptionName}>{herbicide.name}</Text>
+                      <View style={[
+                        styles.safetyBadge,
+                        { backgroundColor: herbicide.safeForTomato === "true" ? '#E8F5E9' : '#FFEBEE' }
+                      ]}>
+                        <Text style={[
+                          styles.safetyBadgeText,
+                          { color: herbicide.safeForTomato === "true" ? '#4CAF50' : '#F44336' }
+                        ]}>
+                          {herbicide.safeForTomato === "true" ? "SAFE" : "CAUTION"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.herbicideDetails}>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Application Rate:</Text>
+                        <Text style={styles.detailValue}>{herbicide.applicationRate}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Mode of Action:</Text>
+                        <Text style={styles.detailValue}>{herbicide.modeOfAction}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Application Method:</Text>
+                        <Text style={styles.detailValue}>{herbicide.applicationMethod}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Weather Constraints:</Text>
+                        <Text style={styles.detailValue}>{herbicide.weatherConstraints}</Text>
+                      </View>
+                      <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Resistance Reported:</Text>
+                        <Text style={[
+                          styles.detailValue,
+                          { color: herbicide.resistanceReported === "true" ? '#F44336' : '#4CAF50' }
+                        ]}>
+                          {herbicide.resistanceReported === "true" ? "Yes" : "No"}
+                        </Text>
+                      </View>
+                      {herbicide.alternativeHerbicide && (
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Alternative:</Text>
+                            <Text style={styles.detailValue}>{herbicide.alternativeHerbicide}</Text>
+                          </View>
+                      )}
+                    </View>
+                  </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Safety Precautions Card */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons name="shield-alert" size={20} color="#FF9800" />
+              <Text style={[styles.cardTitle, { marginLeft: 8 }]}>Safety Precautions</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.safetySection}>
+                <View style={styles.toxicityLevel}>
+                  <Text style={styles.safetyLabel}>Toxicity Level</Text>
+                  <View style={[
+                    styles.toxicityBadge,
+                    {
+                      backgroundColor: data.safetyPrecautions?.toxicity === "High" ? '#FFEBEE' :
+                          data.safetyPrecautions?.toxicity === "Moderate" ? '#FFF3E0' : '#E8F5E9'
+                    }
+                  ]}>
+                    <Text style={[
+                      styles.toxicityText,
+                      {
+                        color: data.safetyPrecautions?.toxicity === "High" ? '#F44336' :
+                            data.safetyPrecautions?.toxicity === "Moderate" ? '#FF9800' : '#4CAF50'
+                      }
+                    ]}>
+                      {data.safetyPrecautions?.toxicity || 'Unknown'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.safetyItem}>
+                  <MaterialCommunityIcons name="account-hard-hat" size={20} color="#2196F3" />
+                  <View style={styles.safetyContent}>
+                    <Text style={styles.safetyTitle}>Human Protection</Text>
+                    <Text style={styles.safetyDescription}>
+                      {data.safetyPrecautions?.humanProtection || 'Follow standard safety protocols'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.safetyItem}>
+                  <MaterialCommunityIcons name="earth" size={20} color="#4CAF50" />
+                  <View style={styles.safetyContent}>
+                    <Text style={styles.safetyTitle}>Environmental Precautions</Text>
+                    <Text style={styles.safetyDescription}>
+                      {data.safetyPrecautions?.environmentalPrecautions || 'Follow environmental guidelines'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Action Buttons */}
+          <TouchableOpacity style={styles.saveButton} onPress={handleShare}>
+            <Text style={styles.saveButtonText}>
+              Share Report <Feather name="share-2" size={15} color="white" />
+            </Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </SafeAreaView>
   );
 };
 
@@ -198,23 +668,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#f5f5f8',
-  },
-  header: {
-    backgroundColor: '#2196F3',
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    elevation: 4,
-  },
-  backButton: {
-    marginRight: 16,
-  },
-  headerTitle: {
-    flex: 1,
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   scrollView: {
     flex: 1,
@@ -240,140 +693,441 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  weedInfoContainer: {
-    flexDirection: 'row',
+  cardContent: {
     padding: 16,
   },
-  weedImageContainer: {
-    width: 90,
-    height: 90,
+  imageSection: {
+    padding: 16,
+  },
+  annotatedImageContainer: {
+    position: 'relative',
+    alignSelf: 'center',
     borderRadius: 8,
     overflow: 'hidden',
-    marginRight: 16,
   },
-  weedImage: {
-    width: '100%',
-    height: '100%',
+  annotatedImage: {
+    borderRadius: 8,
   },
-  weedDetails: {
-    flex: 1,
+  placeholderContainer: {
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#e9ecef',
+    borderStyle: 'dashed',
+    padding: 20,
   },
-  weedName: {
-    fontSize: 18,
+  placeholderText: {
+    marginTop: 8,
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  placeholderSubtext: {
+    marginTop: 4,
+    color: '#999',
+    fontSize: 12,
+    textAlign: 'center',
+    maxWidth: 200,
+  },
+  detectionListFallback: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    minWidth: 200,
+  },
+  fallbackTitle: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
   },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  fallbackItem: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  fallbackMore: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
     marginTop: 4,
   },
-  detailText: {
-    marginLeft: 8,
+  loadingOverlay: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(248, 249, 250, 0.9)',
+    borderRadius: 8,
+  },
+  loadingText: {
+    marginTop: 8,
     color: '#666',
     fontSize: 14,
   },
-  herbicideContainer: {
-    padding: 16,
+  boundingBox: {
+    position: 'absolute',
+    borderWidth: 2,
+    backgroundColor: 'transparent',
   },
-  herbicideHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  herbicideName: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  warningBadge: {
-    backgroundColor: '#FFECB3',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  detectionLabel: {
+    position: 'absolute',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 4,
   },
-  warningText: {
-    color: '#F57C00',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
-  },
-  infoItem: {
-    width: '50%',
-    padding: 8,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '500',
-  },
-  resistanceWarning: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF8E1',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  resistanceText: {
-    marginLeft: 8,
-    color: '#F57C00',
-    flex: 1,
-    fontSize: 13,
-  },
-  safetyBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 16,
-  },
-  safetyText: {
+  detectionLabelText: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
-  safetyContainer: {
+  detectionCountBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  detectionCountText: {
+    color: '#1976D2',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  colorLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  // Summary styles
+  summaryContainer: {
     padding: 16,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  totalBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  totalBadgeText: {
+    color: '#1976D2',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  summaryStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  detectionBreakdown: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  breakdownItem: {
+    marginBottom: 12,
+  },
+  breakdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  classIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  className: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  countBadge: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  countText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  confidenceText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 20,
+  },
+  // Details list styles
+  detailsContainer: {
+    padding: 16,
+  },
+  detailsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  detectionItem: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  detectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+  },
+  detectionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  detectionIndicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 12,
+  },
+  detectionText: {
+    flex: 1,
+  },
+  detectionName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  detectionConfidence: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  detectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cropBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  cropBadgeText: {
+    color: '#4CAF50',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  expandedContent: {
+    padding: 12,
+    paddingTop: 0,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  boundingBoxInfo: {
+    marginBottom: 12,
+  },
+  expandedLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  expandedValue: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  detectionAdvice: {
+    backgroundColor: '#f8f9fa',
+    padding: 8,
+    borderRadius: 4,
+  },
+  // Herbicide recommendation styles
+  herbicideRecommendation: {
+    marginBottom: 8,
+  },
+  primaryRecommendation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F3F8FF',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+  recommendationDetails: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  herbicideName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  applicationRate: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  recommendationBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  recommendationBadgeText: {
+    color: '#1976D2',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  // Herbicide options styles
+  herbicideOption: {
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#FAFAFA',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  herbicideHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  herbicideOptionName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  safetyBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  safetyBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  herbicideDetails: {
+    gap: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+    flex: 1,
+    textAlign: 'right',
+  },
+  // Safety precautions styles
+  safetySection: {
+    gap: 16,
+  },
+  toxicityLevel: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  safetyLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  toxicityBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  toxicityText: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   safetyItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 16,
   },
   safetyContent: {
     marginLeft: 12,
     flex: 1,
   },
-  safetyLabel: {
+  safetyTitle: {
     fontSize: 14,
-    color: '#555',
-    fontWeight: '500',
+    fontWeight: 'bold',
+    color: '#333',
     marginBottom: 4,
   },
-  safetyValue: {
+  safetyDescription: {
     fontSize: 14,
-    color: '#333',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginVertical: 12,
+    color: '#666',
+    lineHeight: 20,
   },
   saveButton: {
     backgroundColor: '#2196F3',
     marginHorizontal: 16,
-    marginVertical: 24,
+    marginTop: 24,
+    marginBottom: 24,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',

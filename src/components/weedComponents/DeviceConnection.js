@@ -80,8 +80,8 @@ const DeviceConnection = ({ onDeviceDataReceived, deviceData }) => {
       
       // Try direct connection to the ESP32
       try {
-        console.log("Trying direct connection to 192.168.1.100");
-        const directResponse = await fetch('http://192.168.1.100/api/info', { timeout: 2000 });
+        console.log("Trying direct connection to 192.168.8.2");
+        const directResponse = await fetch('http://192.168.8.2/api/info', { timeout: 2000 });
         const directData = await directResponse.json();
         console.log("Direct connection successful:", directData);
         discoveredDevices.push({

@@ -14,9 +14,10 @@ import SettingsScreen from './src/screens/SettingsScreen';
 // import PestDetectionScreen from './src/screens/PestDetectionScreen';
 // import DiseaseScreen from './src/screens/DiseaseScreen';
 // import HarvestScreen from './src/screens/HarvestScreen';
-import WeedScreen from './src/screens/WeedScreen';
 import ForumScreen from './src/screens/ForumScreen';
+import weedScreen from "./src/screens/WeedScreen";
 import HerbicideReportScreen from './src/screens/HerbicideReportScreen';
+import WeedScreen from "./src/screens/WeedScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -123,7 +124,17 @@ const App = () => {
                 headerTintColor: '#fff',
               }}
           />
-          <Stack.Screen name="HerbicideReportScreen" component={HerbicideReportScreen} />
+          <Stack.Screen
+              name="HerbicideReportScreen"
+              component={HerbicideReportScreen}
+              options={{
+                  title: 'Herbicide Report',
+                  headerStyle: {
+                      backgroundColor: '#4CAF50',
+                  },
+                  headerTintColor: '#fff',
+              }}
+          />
           <Stack.Screen
               name="Forum"
               component={ForumScreen}

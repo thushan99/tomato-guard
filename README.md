@@ -32,3 +32,7 @@ To set up the project locally on your machine, follow the steps below:
  expo install @react-native-community/netinfo
  expo install expo-image-picker
  expo install expo-camera
+ npm install axios
+ npm install @react-native-async-storage/async-storage
+ npm install react-navigation-shared-element expo-file-system
+
