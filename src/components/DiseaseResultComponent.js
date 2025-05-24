@@ -6,7 +6,6 @@ const DiseaseResultComponent = ({
   diseaseResult,
   fertilizerRecommendation,
   dosage,
-  onAddFertilizer,
 }) => {
   const navigation = useNavigation()
 
@@ -14,6 +13,29 @@ const DiseaseResultComponent = ({
 
   const handleCancel = () => {
     navigation.goBack()
+  }
+
+  const onAddFertilizer = async () => {
+    try {
+      const fertilizer = fertilizerRecommendation
+
+      const response = await fetch("http://192.168.8.122/activate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fertilizer }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Status: ${response.status}`)
+      }
+
+      const result = await response.text()
+      console.log("ESP32 response:", result)
+    } catch (error) {
+      console.error("Error sending fertilizer:", error.message)
+    }
   }
 
   return (
