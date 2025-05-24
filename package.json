@@ -26,8 +26,6 @@
     "metro-source-map": "^0.81.2",
     "react": "18.3.1",
     "react-native": "0.76.7",
-    "react-native-ble-manager": "^12.1.4",
-    "react-native-bluetooth-serial": "^1.0.0-rc1",
     "react-native-geolocation-service": "^5.3.1",
     "react-native-image-picker": "^8.1.0",
     "react-native-progress": "^5.0.1",

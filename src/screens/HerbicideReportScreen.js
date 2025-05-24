@@ -426,6 +426,51 @@ const HerbicideReportScreen = ({ route, navigation }) => {
   const detections = data.detectionInfo?.detections || [];
   const hasMultipleDetections = detections.length > 1;
 
+  // FIXED: Check if there are any weeds detected to show herbicide recommendations
+  const weedDetections = detections.filter(detection =>
+      !detection.className.toLowerCase().includes('tomato')
+  );
+  const hasWeedDetections = weedDetections.length > 0;
+
+  // FIXED: Generate appropriate recommendations based on detections
+  const getRecommendationTitle = () => {
+    if (hasWeedDetections) {
+      return "Recommended Herbicide Treatment";
+    } else if (detections.length > 0) {
+      return "Crop Protection Recommendations";
+    } else {
+      return "No Recommendations Available";
+    }
+  };
+
+  const getRecommendationContent = () => {
+    if (hasWeedDetections) {
+      return {
+        title: data.predictedHerbicideName || "Selective Herbicide",
+        subtitle: `Application Rate: ${data.predictedApplicationRate || "As per label"} L/ha`,
+        icon: "spray",
+        color: "#FF5722"
+      };
+    } else if (detections.length > 0) {
+      const cropCount = detections.filter(d => d.className.toLowerCase().includes('tomato')).length;
+      return {
+        title: "No Herbicide Treatment Needed",
+        subtitle: `${cropCount} healthy crop plants detected`,
+        icon: "shield-check",
+        color: "#4CAF50"
+      };
+    } else {
+      return {
+        title: "No Plants Detected",
+        subtitle: "Capture an image with plants for recommendations",
+        icon: "image-off",
+        color: "#999"
+      };
+    }
+  };
+
+  const recommendationContent = getRecommendationContent();
+
   const handleShare = async () => {
     try {
       const detectionSummary = detections.reduce((acc, detection) => {
@@ -446,8 +491,10 @@ Total Detections: ${detections.length}
 Plant Breakdown:
 ${summaryText}
 
-Recommended Herbicide: ${data.predictedHerbicideName}
-Application Rate: ${data.predictedApplicationRate} L/ha
+${hasWeedDetections ?
+          `Recommended Herbicide: ${data.predictedHerbicideName}\nApplication Rate: ${data.predictedApplicationRate} L/ha` :
+          'No herbicide treatment required - only crops detected'
+      }
 
 Environmental Conditions:
 Temperature: ${data.temperature}°C
@@ -516,141 +563,170 @@ Detection Model: ${data.detectionInfo?.modelUsed || 'Unknown'}
             <DetectionDetailsList detections={detections} />
           </View>
 
-          {/* Herbicide Recommendation Card */}
+          {/* FIXED: Enhanced Recommendation Card */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Recommended Herbicide</Text>
-              <View style={styles.recommendationBadge}>
-                <Text style={styles.recommendationBadgeText}>AI Predicted</Text>
+              <Text style={styles.cardTitle}>{getRecommendationTitle()}</Text>
+              <View style={[
+                styles.recommendationBadge,
+                { backgroundColor: hasWeedDetections ? '#FFEBEE' : '#E8F5E9' }
+              ]}>
+                <Text style={[
+                  styles.recommendationBadgeText,
+                  { color: hasWeedDetections ? '#F44336' : '#4CAF50' }
+                ]}>
+                  {hasWeedDetections ? 'ACTION NEEDED' : 'NO ACTION'}
+                </Text>
               </View>
             </View>
             <View style={styles.cardContent}>
               <View style={styles.herbicideRecommendation}>
-                <View style={styles.primaryRecommendation}>
-                  <MaterialCommunityIcons name="spray" size={24} color="#2196F3" />
+                <View style={[
+                  styles.primaryRecommendation,
+                  {
+                    backgroundColor: hasWeedDetections ? '#FFF3E0' : '#F3F8FF',
+                    borderLeftColor: recommendationContent.color
+                  }
+                ]}>
+                  <MaterialCommunityIcons
+                      name={recommendationContent.icon}
+                      size={24}
+                      color={recommendationContent.color}
+                  />
                   <View style={styles.recommendationDetails}>
-                    <Text style={styles.herbicideName}>{data.predictedHerbicideName}</Text>
-                    <Text style={styles.applicationRate}>
-                      Application Rate: {data.predictedApplicationRate} L/ha
+                    <Text style={styles.herbicideName}>
+                      {recommendationContent.title}
                     </Text>
+                    <Text style={styles.applicationRate}>
+                      {recommendationContent.subtitle}
+                    </Text>
+                    {hasWeedDetections && (
+                        <Text style={styles.weedWarning}>
+                          ⚠️ {weedDetections.length} weed(s) detected requiring treatment
+                        </Text>
+                    )}
                   </View>
                 </View>
               </View>
             </View>
           </View>
 
-          {/* Herbicide Options Card */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>Herbicide Options ({data.herbicideOptions?.length || 0})</Text>
-            </View>
-            <View style={styles.cardContent}>
-              {data.herbicideOptions?.map((herbicide, index) => (
-                  <View key={index} style={styles.herbicideOption}>
-                    <View style={styles.herbicideHeader}>
-                      <Text style={styles.herbicideOptionName}>{herbicide.name}</Text>
+          {/* FIXED: Only show herbicide options if weeds are detected */}
+          {hasWeedDetections && (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>Herbicide Options ({data.herbicideOptions?.length || 0})</Text>
+                </View>
+                <View style={styles.cardContent}>
+                  {data.herbicideOptions?.map((herbicide, index) => (
+                      <View key={index} style={styles.herbicideOption}>
+                        <View style={styles.herbicideHeader}>
+                          <Text style={styles.herbicideOptionName}>{herbicide.name}</Text>
+                          <View style={[
+                            styles.safetyBadge,
+                            { backgroundColor: herbicide.safeForTomato === "true" ? '#E8F5E9' : '#FFEBEE' }
+                          ]}>
+                            <Text style={[
+                              styles.safetyBadgeText,
+                              { color: herbicide.safeForTomato === "true" ? '#4CAF50' : '#F44336' }
+                            ]}>
+                              {herbicide.safeForTomato === "true" ? "SAFE" : "CAUTION"}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.herbicideDetails}>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Application Rate:</Text>
+                            <Text style={styles.detailValue}>{herbicide.applicationRate}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Mode of Action:</Text>
+                            <Text style={styles.detailValue}>{herbicide.modeOfAction}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Application Method:</Text>
+                            <Text style={styles.detailValue}>{herbicide.applicationMethod}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Weather Constraints:</Text>
+                            <Text style={styles.detailValue}>{herbicide.weatherConstraints}</Text>
+                          </View>
+                          <View style={styles.detailRow}>
+                            <Text style={styles.detailLabel}>Resistance Reported:</Text>
+                            <Text style={[
+                              styles.detailValue,
+                              { color: herbicide.resistanceReported === "true" ? '#F44336' : '#4CAF50' }
+                            ]}>
+                              {herbicide.resistanceReported === "true" ? "Yes" : "No"}
+                            </Text>
+                          </View>
+                          {herbicide.alternativeHerbicide && (
+                              <View style={styles.detailRow}>
+                                <Text style={styles.detailLabel}>Alternative:</Text>
+                                <Text style={styles.detailValue}>{herbicide.alternativeHerbicide}</Text>
+                              </View>
+                          )}
+                        </View>
+                      </View>
+                  ))}
+                </View>
+              </View>
+          )}
+
+          {/* FIXED: Only show safety precautions if herbicides are recommended */}
+          {hasWeedDetections && (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <MaterialCommunityIcons name="shield-alert" size={20} color="#FF9800" />
+                  <Text style={[styles.cardTitle, { marginLeft: 8 }]}>Safety Precautions</Text>
+                </View>
+                <View style={styles.cardContent}>
+                  <View style={styles.safetySection}>
+                    <View style={styles.toxicityLevel}>
+                      <Text style={styles.safetyLabel}>Toxicity Level</Text>
                       <View style={[
-                        styles.safetyBadge,
-                        { backgroundColor: herbicide.safeForTomato === "true" ? '#E8F5E9' : '#FFEBEE' }
+                        styles.toxicityBadge,
+                        {
+                          backgroundColor: data.safetyPrecautions?.toxicity === "High" ? '#FFEBEE' :
+                              data.safetyPrecautions?.toxicity === "Moderate" ? '#FFF3E0' : '#E8F5E9'
+                        }
                       ]}>
                         <Text style={[
-                          styles.safetyBadgeText,
-                          { color: herbicide.safeForTomato === "true" ? '#4CAF50' : '#F44336' }
+                          styles.toxicityText,
+                          {
+                            color: data.safetyPrecautions?.toxicity === "High" ? '#F44336' :
+                                data.safetyPrecautions?.toxicity === "Moderate" ? '#FF9800' : '#4CAF50'
+                          }
                         ]}>
-                          {herbicide.safeForTomato === "true" ? "SAFE" : "CAUTION"}
+                          {data.safetyPrecautions?.toxicity || 'Unknown'}
                         </Text>
                       </View>
                     </View>
 
-                    <View style={styles.herbicideDetails}>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Application Rate:</Text>
-                        <Text style={styles.detailValue}>{herbicide.applicationRate}</Text>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Mode of Action:</Text>
-                        <Text style={styles.detailValue}>{herbicide.modeOfAction}</Text>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Application Method:</Text>
-                        <Text style={styles.detailValue}>{herbicide.applicationMethod}</Text>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Weather Constraints:</Text>
-                        <Text style={styles.detailValue}>{herbicide.weatherConstraints}</Text>
-                      </View>
-                      <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>Resistance Reported:</Text>
-                        <Text style={[
-                          styles.detailValue,
-                          { color: herbicide.resistanceReported === "true" ? '#F44336' : '#4CAF50' }
-                        ]}>
-                          {herbicide.resistanceReported === "true" ? "Yes" : "No"}
+                    <View style={styles.safetyItem}>
+                      <MaterialCommunityIcons name="account-hard-hat" size={20} color="#2196F3" />
+                      <View style={styles.safetyContent}>
+                        <Text style={styles.safetyTitle}>Human Protection</Text>
+                        <Text style={styles.safetyDescription}>
+                          {data.safetyPrecautions?.humanProtection || 'Follow standard safety protocols'}
                         </Text>
                       </View>
-                      {herbicide.alternativeHerbicide && (
-                          <View style={styles.detailRow}>
-                            <Text style={styles.detailLabel}>Alternative:</Text>
-                            <Text style={styles.detailValue}>{herbicide.alternativeHerbicide}</Text>
-                          </View>
-                      )}
                     </View>
-                  </View>
-              ))}
-            </View>
-          </View>
 
-          {/* Safety Precautions Card */}
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <MaterialCommunityIcons name="shield-alert" size={20} color="#FF9800" />
-              <Text style={[styles.cardTitle, { marginLeft: 8 }]}>Safety Precautions</Text>
-            </View>
-            <View style={styles.cardContent}>
-              <View style={styles.safetySection}>
-                <View style={styles.toxicityLevel}>
-                  <Text style={styles.safetyLabel}>Toxicity Level</Text>
-                  <View style={[
-                    styles.toxicityBadge,
-                    {
-                      backgroundColor: data.safetyPrecautions?.toxicity === "High" ? '#FFEBEE' :
-                          data.safetyPrecautions?.toxicity === "Moderate" ? '#FFF3E0' : '#E8F5E9'
-                    }
-                  ]}>
-                    <Text style={[
-                      styles.toxicityText,
-                      {
-                        color: data.safetyPrecautions?.toxicity === "High" ? '#F44336' :
-                            data.safetyPrecautions?.toxicity === "Moderate" ? '#FF9800' : '#4CAF50'
-                      }
-                    ]}>
-                      {data.safetyPrecautions?.toxicity || 'Unknown'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.safetyItem}>
-                  <MaterialCommunityIcons name="account-hard-hat" size={20} color="#2196F3" />
-                  <View style={styles.safetyContent}>
-                    <Text style={styles.safetyTitle}>Human Protection</Text>
-                    <Text style={styles.safetyDescription}>
-                      {data.safetyPrecautions?.humanProtection || 'Follow standard safety protocols'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.safetyItem}>
-                  <MaterialCommunityIcons name="earth" size={20} color="#4CAF50" />
-                  <View style={styles.safetyContent}>
-                    <Text style={styles.safetyTitle}>Environmental Precautions</Text>
-                    <Text style={styles.safetyDescription}>
-                      {data.safetyPrecautions?.environmentalPrecautions || 'Follow environmental guidelines'}
-                    </Text>
+                    <View style={styles.safetyItem}>
+                      <MaterialCommunityIcons name="earth" size={20} color="#4CAF50" />
+                      <View style={styles.safetyContent}>
+                        <Text style={styles.safetyTitle}>Environmental Precautions</Text>
+                        <Text style={styles.safetyDescription}>
+                          {data.safetyPrecautions?.environmentalPrecautions || 'Follow environmental guidelines'}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
-          </View>
+          )}
 
           {/* Action Buttons */}
           <TouchableOpacity style={styles.saveButton} onPress={handleShare}>
@@ -684,7 +760,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -701,9 +777,7 @@ const styles = StyleSheet.create({
   },
   annotatedImageContainer: {
     position: 'relative',
-    alignSelf: 'center',
-    borderRadius: 8,
-    overflow: 'hidden',
+    alignItems: 'center',
   },
   annotatedImage: {
     borderRadius: 8,
@@ -711,32 +785,31 @@ const styles = StyleSheet.create({
   placeholderContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f8f8f8',
     borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#e9ecef',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
     borderStyle: 'dashed',
-    padding: 20,
   },
   placeholderText: {
-    marginTop: 8,
-    color: '#666',
     fontSize: 16,
+    color: '#666',
+    marginTop: 8,
     fontWeight: '500',
   },
   placeholderSubtext: {
-    marginTop: 4,
-    color: '#999',
     fontSize: 12,
+    color: '#999',
+    marginTop: 4,
     textAlign: 'center',
-    maxWidth: 200,
   },
   detectionListFallback: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
     borderRadius: 8,
-    minWidth: 200,
+    width: '90%',
+    alignItems: 'flex-start',
   },
   fallbackTitle: {
     fontSize: 14,
@@ -753,44 +826,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     fontStyle: 'italic',
-    marginTop: 4,
   },
   loadingOverlay: {
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(248, 249, 250, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 8,
   },
   loadingText: {
     marginTop: 8,
-    color: '#666',
     fontSize: 14,
+    color: '#666',
   },
   boundingBox: {
     position: 'absolute',
     borderWidth: 2,
-    backgroundColor: 'transparent',
+    borderStyle: 'solid',
   },
   detectionLabel: {
     position: 'absolute',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 4,
+    maxWidth: 150,
   },
   detectionLabelText: {
     color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  detectionCountBadge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 16,
-  },
-  detectionCountText: {
-    color: '#1976D2',
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -798,14 +860,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    gap: 20,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
   },
   legendColor: {
     width: 12,
@@ -817,7 +876,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  // Summary styles
+  detectionCountBadge: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  detectionCountText: {
+    color: '#1976D2',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   summaryContainer: {
     padding: 16,
   },
@@ -833,15 +902,15 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   totalBadge: {
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 16,
+    borderRadius: 12,
   },
   totalBadgeText: {
-    color: '#1976D2',
+    color: '#666',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   summaryStats: {
     flexDirection: 'row',
@@ -850,6 +919,7 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
   },
   statNumber: {
     fontSize: 24,
@@ -858,17 +928,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
   detectionBreakdown: {
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    gap: 12,
   },
   breakdownItem: {
-    marginBottom: 12,
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
   },
   breakdownHeader: {
     flexDirection: 'row',
@@ -882,16 +952,18 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   className: {
-    flex: 1,
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#333',
+    flex: 1,
   },
   countBadge: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'white',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 12,
+    borderRadius: 10,
+    minWidth: 24,
+    alignItems: 'center',
   },
   countText: {
     fontSize: 12,
@@ -903,7 +975,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 20,
   },
-  // Details list styles
   detailsContainer: {
     padding: 16,
   },
@@ -911,11 +982,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   detectionItem: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    backgroundColor: '#F8F9FA',
     borderRadius: 8,
     marginBottom: 8,
     overflow: 'hidden',
@@ -935,14 +1005,14 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 12,
+    marginRight: 10,
   },
   detectionText: {
     flex: 1,
   },
   detectionName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#333',
   },
   detectionConfidence: {
@@ -958,7 +1028,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: 8,
     marginRight: 8,
   },
   cropBadgeText: {
@@ -969,15 +1039,14 @@ const styles = StyleSheet.create({
   expandedContent: {
     padding: 12,
     paddingTop: 0,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    backgroundColor: 'white',
   },
   boundingBoxInfo: {
     marginBottom: 12,
   },
   expandedLabel: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
@@ -987,56 +1056,57 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   detectionAdvice: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F0F7FF',
     padding: 8,
-    borderRadius: 4,
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2196F3',
   },
-  // Herbicide recommendation styles
+  recommendationBadge: {
+    marginTop: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  recommendationBadgeText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
   herbicideRecommendation: {
-    marginBottom: 8,
+    marginBottom: 16,
   },
   primaryRecommendation: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#F3F8FF',
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#2196F3',
   },
   recommendationDetails: {
     marginLeft: 12,
     flex: 1,
   },
   herbicideName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 4,
   },
   applicationRate: {
     fontSize: 14,
     color: '#666',
-    marginTop: 2,
+    marginBottom: 4,
   },
-  recommendationBadge: {
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  weedWarning: {
+    fontSize: 12,
+    color: '#FF5722',
+    fontWeight: '500',
   },
-  recommendationBadgeText: {
-    color: '#1976D2',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  // Herbicide options styles
   herbicideOption: {
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8F9FA',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    padding: 16,
+    marginBottom: 12,
   },
   herbicideHeader: {
     flexDirection: 'row',
@@ -1055,7 +1125,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   safetyBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 'bold',
   },
   herbicideDetails: {
@@ -1067,18 +1137,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     flex: 1,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
     fontWeight: '500',
-    flex: 1,
+    flex: 2,
     textAlign: 'right',
   },
-  // Safety precautions styles
   safetySection: {
     gap: 16,
   },
@@ -1086,22 +1155,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    marginBottom: 8,
   },
   safetyLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
     color: '#333',
   },
   toxicityBadge: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   toxicityText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
   },
   safetyItem: {
@@ -1114,21 +1181,20 @@ const styles = StyleSheet.create({
   },
   safetyTitle: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#333',
     marginBottom: 4,
   },
   safetyDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
-    lineHeight: 20,
+    lineHeight: 16,
   },
   saveButton: {
     backgroundColor: '#2196F3',
     marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 24,
-    paddingVertical: 14,
+    marginVertical: 20,
+    paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
     elevation: 2,
@@ -1136,7 +1202,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 });
 
