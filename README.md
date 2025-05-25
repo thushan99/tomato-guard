@@ -25,3 +25,14 @@ To set up the project locally on your machine, follow the steps below:
   ```bash
   npm install -g expo-cli
  You can install it by running:
+
+## install this 2025.03.14
+
+ expo install expo-location
+ expo install @react-native-community/netinfo
+ expo install expo-image-picker
+ expo install expo-camera
+ npm install axios
+ npm install @react-native-async-storage/async-storage
+ npm install react-navigation-shared-element expo-file-system
+

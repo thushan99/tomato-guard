@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react"
 import {
   View,
@@ -202,11 +203,57 @@ const HomeScreen = ({ navigation }) => {
                 <Icon name={feature.icon} size={36} color="#fff" />
                 <Text style={styles.featureTitle}>{feature.title}</Text>
                 <Text style={styles.featureDesc}>{feature.description}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
+            </LinearGradient>
+        </TouchableOpacity>
+    );
 
+    return (
+        <View style={styles.container}>
+            <StatusBar backgroundColor="#388E3C" barStyle="light-content" />
+
+            {/* Header */}
+            <View style={styles.header}>
+                <View>
+                    <Text style={styles.greetingText}>Hello, Farmer!</Text>
+                    <Text style={styles.subText}>What would you like to do today?</Text>
+                </View>
+                <Image
+                    // source={require('../assets/profile-placeholder.png')}
+                    source={require('../assets/tomatoLogo2.png')}
+                    style={styles.profileImage}
+                />
+            </View>
+
+            {/* Weather Summary */}
+            <View style={styles.weatherContainer}>
+                <View style={styles.weatherInfo}>
+                    <Icon name="weather-partly-cloudy" size={30} color="#388E3C" />
+                    <View style={styles.weatherTextContainer}>
+                        <Text style={styles.weatherTemp}>24°C</Text>
+                        <Text style={styles.weatherDesc}>Partly Cloudy</Text>
+                    </View>
+                </View>
+                <View style={styles.weatherDetails}>
+                    <View style={styles.weatherDetail}>
+                        <Icon name="water-percent" size={20} color="#757575" />
+                        <Text style={styles.detailText}>65%</Text>
+                    </View>
+                    <View style={styles.weatherDetail}>
+                        <Icon name="thermometer" size={20} color="#757575" />
+                        <Text style={styles.detailText}>Optimal</Text>
+                    </View>
+                </View>
+            </View>
+
+            {/* Feature Cards */}
+            <Text style={styles.sectionTitle}>Features</Text>
+            <ScrollView
+                style={styles.featuresContainer}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.cardsGrid}>
+                    {features.map(feature => renderFeatureCard(feature))}
+                </View>
         {/* Tips Section */}
         <View style={styles.tipsContainer}>
           <Text style={styles.sectionTitle}>Today's Tip</Text>
