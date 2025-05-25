@@ -108,7 +108,7 @@ const WeatherComponent = () => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#FFF",
-    padding: 5,
+    padding: 0,
     borderRadius: 12,
     elevation: 5,
     shadowColor: "#000",
@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     margin: 10,
     alignItems: "center",
+    width: 350,
   },
   iconContainer: {
     alignItems: "center",
@@ -126,7 +127,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginLeft: 10,
   },
   weatherInfo: {
     flexDirection: "row",
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   weatherBox: {
     alignItems: "center",
     padding: 5,
-    width: 100,
+    width: 85,
   },
   label: {
     fontSize: 14,

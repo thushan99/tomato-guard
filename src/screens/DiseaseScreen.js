@@ -31,7 +31,6 @@ const DiseaseScreen = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Function to fetch weather data
   const fetchWeatherData = async () => {
     try {
       const response = await axios.get(
@@ -46,7 +45,6 @@ const DiseaseScreen = () => {
     }
   }
 
-  // Function to identify disease from the uploaded image
   const identifyDisease = async imageUri => {
     setLoading(true)
     setError(null)
@@ -81,32 +79,28 @@ const DiseaseScreen = () => {
   }
 
   const handleImageUpload = imageUri => {
-    // Reset state before updating with new image to ensure the previous one is removed
     setDiseaseResult(null)
     setFertilizerRecommendation(null)
     setAlertMessage(null)
-    setImage(imageUri) // Set new image
-    identifyDisease(imageUri) // Identify disease with the new image
+    setImage(imageUri)
+    identifyDisease(imageUri)
   }
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Weather Data Component */}
         <WeatherComponent weatherData={weatherData} />
 
-        {/* Image Picker Component */}
         <ImagePickerComponent
           fetchWeatherData={fetchWeatherData}
           setDiseaseResult={setDiseaseResult}
           setFertilizerRecommendation={setFertilizerRecommendation}
           setAlertMessage={setAlertMessage}
-          setImage={handleImageUpload} // Pass handleImageUpload function to ImagePicker
+          setImage={handleImageUpload}
           theme="disease"
           identifyDisease={identifyDisease}
         />
 
-        {/* Show Loading Indicator while Identifying Disease */}
         {loading ? (
           <ActivityIndicator size="large" color="#4CAF50" />
         ) : error ? (
@@ -118,6 +112,8 @@ const DiseaseScreen = () => {
               alertMessage={alertMessage}
               fertilizerRecommendation={fertilizerRecommendation}
               dosage={dosage}
+              // onAddFertilizer={() => console.log("Fertilizer added")}
+              // onCancel={() => console.log("Cancelled")}
             />
           )
         )}
