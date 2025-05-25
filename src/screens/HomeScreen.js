@@ -1,5 +1,3 @@
-// screens/HomeScreen.js
-
 import React from 'react';
 import {
     View,
@@ -88,7 +86,7 @@ const HomeScreen = ({ navigation }) => {
                 </View>
                 <Image
                     // source={require('../assets/profile-placeholder.png')}
-                    source={require('../assets/tomato.png')}
+                    source={require('../assets/tomatoLogo2.png')}
                     style={styles.profileImage}
                 />
             </View>

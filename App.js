@@ -68,7 +68,7 @@ const MainTabs = () => {
 const App = () => {
   return (
       <NavigationContainer>
-        <StatusBar backgroundColor="#e53935" barStyle="light-content" />
+        <StatusBar backgroundColor="#ededed" barStyle="light-content" />
         <Stack.Navigator initialRouteName="Splash">
           <Stack.Screen
               name="Splash"

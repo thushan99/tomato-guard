@@ -423,13 +423,16 @@ const HerbicideReportScreen = ({ route, navigation }) => {
   // Debug log to check the image URI
   console.log('Image URI:', data.capturedImageUri);
 
-  const detections = data.detectionInfo?.detections || [];
+  const detections = (data.detectionInfo?.detections || []).filter(
+      detection => detection.confidence >= 0.4
+  );
   const hasMultipleDetections = detections.length > 1;
 
   // FIXED: Check if there are any weeds detected to show herbicide recommendations
   const weedDetections = detections.filter(detection =>
       !detection.className.toLowerCase().includes('tomato')
   );
+
   const hasWeedDetections = weedDetections.length > 0;
 
   // FIXED: Generate appropriate recommendations based on detections
@@ -455,7 +458,7 @@ const HerbicideReportScreen = ({ route, navigation }) => {
       const cropCount = detections.filter(d => d.className.toLowerCase().includes('tomato')).length;
       return {
         title: "No Herbicide Treatment Needed",
-        subtitle: `${cropCount} healthy crop plants detected`,
+        subtitle: `${cropCount} healthy crop plants detected (≥40% confidence)`,
         icon: "shield-check",
         color: "#4CAF50"
       };

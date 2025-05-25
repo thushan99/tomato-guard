@@ -22,7 +22,7 @@ const ProfileScreen = () => {
                 <View style={styles.profileInfo}>
                     <Image
                         // source={require('../assets/profile-placeholder.png')}
-                        source={require('../assets/tomato.png')}
+                        source={require('../assets/tomatoLogo2.png')}
                         style={styles.profileImage}
                     />
                     <Text style={styles.userName}>John Doe</Text>
