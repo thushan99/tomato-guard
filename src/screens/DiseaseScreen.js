@@ -10,9 +10,9 @@ import {
 } from "react-native"
 import axios from "axios"
 
-import ImagePickerComponent from "../components/ImagePickerComponent"
-import WeatherComponent from "../components/WeatherComponent"
-import DiseaseResultComponent from "../components/DiseaseResultComponent"
+import ImagePickerComponent from "../components/deseaseComponents/ImagePickerComponent"
+import WeatherComponent from "../components/deseaseComponents/WeatherComponent"
+import DiseaseResultComponent from "../components/deseaseComponents/DiseaseResultComponent"
 
 const { width } = Dimensions.get("window")
 

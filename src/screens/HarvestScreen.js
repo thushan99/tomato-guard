@@ -10,7 +10,7 @@ import {
 import LottieView from "lottie-react-native"
 import axios from "axios"
 
-import PestImagePickerComponent from "../components/PestImagePickerComponent"
+import PestImagePickerComponent from "../components/deseaseComponents/PestImagePickerComponent"
 
 const HarvestScreen = () => {
   const [pestResult, setPestResult] = useState(null)
