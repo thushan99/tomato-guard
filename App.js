@@ -12,11 +12,16 @@ import HistoryScreen from "./src/screens/HistoryScreen"
 import ProfileScreen from "./src/screens/ProfileScreen"
 import SettingsScreen from "./src/screens/SettingsScreen"
 import PestScreen from "./src/screens/PestScreen"
+import PestDetectionScreen from "./src/screens/PestDetectionScreen"
 import DiseaseScreen from "./src/screens/DiseaseScreen"
-// import HarvestScreen from './src/screens/HarvestScreen';
-// import WeedScreen from './src/screens/WeedScreen';
-import WeedIdentificationScreen from "./src/screens/WeedIdentificationScreen"
-import ForumScreen from "./src/screens/ForumScreen"
+import WeedScreen from "./src/screens/WeedScreen"
+import HarvestScreen from './src/screens/HarvestScreen';
+
+import ForumScreen from './src/screens/ForumScreen';
+
+import HerbicideReportScreen from './src/screens/HerbicideReportScreen';
+
+
 
 const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -66,77 +71,88 @@ const MainTabs = () => {
 // Main App with Navigation
 const App = () => {
   return (
-    <NavigationContainer>
-      <StatusBar backgroundColor="#e53935" barStyle="light-content" />
-      <Stack.Navigator initialRouteName="Splash">
-        <Stack.Screen
-          name="Splash"
-          component={SplashScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="MainTabs"
-          component={MainTabs}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="PestScreen"
-          component={PestScreen}
-          options={{
-            title: "Pest Diagnosis",
-            headerStyle: {
-              backgroundColor: "#F57C00",
-            },
-            headerTintColor: "#FFFFFF",
-          }}
-        />
-        <Stack.Screen
-          name="Disease"
-          component={DiseaseScreen}
-          options={{
-            title: "Disease Diagnosis",
-            headerStyle: {
-              backgroundColor: "#388E3C", // Dark Green for Header
-            },
-            headerTintColor: "#FFFFFF", // White Text for Header
-          }}
-        />
-        {/*<Stack.Screen*/}
-        {/*    name="Harvest"*/}
-        {/*    component={HarvestScreen}*/}
-        {/*    options={{*/}
-        {/*      title: 'Smart Harvest',*/}
-        {/*      headerStyle: {*/}
-        {/*        backgroundColor: '#e53935',*/}
-        {/*      },*/}
-        {/*      headerTintColor: '#fff',*/}
-        {/*    }}*/}
-        {/*/>*/}
-        <Stack.Screen
-          name="Weed"
-          component={WeedIdentificationScreen}
-          options={{
-            title: "Weed Identification",
-            headerStyle: {
-              backgroundColor: "#4CAF50",
-            },
-            headerTintColor: "#fff",
-          }}
-        />
-        <Stack.Screen
-          name="Forum"
-          component={ForumScreen}
-          options={{
-            title: "Farmer Community",
-            headerStyle: {
-              backgroundColor: "#4CAF50",
-            },
-            headerTintColor: "#fff",
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-  )
-}
 
+      <NavigationContainer>
+        <StatusBar backgroundColor="#ededed" barStyle="light-content" />
+        <Stack.Navigator initialRouteName="Splash">
+          <Stack.Screen
+              name="Splash"
+              component={SplashScreen}
+              options={{ headerShown: false }}
+          />
+          <Stack.Screen
+              name="MainTabs"
+              component={MainTabs}
+              options={{ headerShown: false }}
+          />
+          <Stack.Screen
+              name="PestDetection"
+              component={PestScreen}
+              options={{
+              title: 'Pest Detection',
+              headerStyle: {
+              backgroundColor: '#e53935',
+             },
+               headerTintColor: '#fff',
+           }}
+          /> 
+          <Stack.Screen
+            name="Disease"
+              component={DiseaseScreen}
+              options={{
+               title: 'Disease Diagnosis',
+                headerStyle: {
+              backgroundColor: '#e53935',
+           },
+          headerTintColor: '#fff',
+          }}
+          />
+          <Stack.Screen
+            name="Harvest"
+             component={HarvestScreen}
+            options={{
+              title: 'Smart Harvest',
+              headerStyle: {
+                backgroundColor: '#e53935',
+               },
+                headerTintColor: '#fff',
+              }}
+          /> 
+          <Stack.Screen
+              name="Weed"
+              component={WeedScreen}
+              options={{
+                title: 'Weed Identification',
+                headerStyle: {
+                  backgroundColor: '#4CAF50',
+                },
+                headerTintColor: '#fff',
+              }}
+          />
+          <Stack.Screen
+              name="HerbicideReportScreen"
+              component={HerbicideReportScreen}
+              options={{
+                  title: 'Herbicide Report',
+                  headerStyle: {
+                      backgroundColor: '#4CAF50',
+                  },
+                  headerTintColor: '#fff',
+              }}
+          />
+          <Stack.Screen
+              name="Forum"
+              component={ForumScreen}
+              options={{
+                title: 'Farmer Community',
+                headerStyle: {
+                  backgroundColor: '#4CAF50',
+                },
+                headerTintColor: '#fff',
+              }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+  );
+};
 export default App

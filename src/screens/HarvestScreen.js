@@ -7,11 +7,12 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native"
+import LottieView from "lottie-react-native"
 import axios from "axios"
 
 import PestImagePickerComponent from "../components/PestImagePickerComponent"
 
-const PestScreen = () => {
+const HarvestScreen = () => {
   const [pestResult, setPestResult] = useState(null)
   const [alertMessage, setAlertMessage] = useState(null)
   const [fertilizerRecommendation, setFertilizerRecommendation] = useState(null)
@@ -125,4 +126,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default PestScreen;
+export default HarvestScreen;
