@@ -12,11 +12,13 @@ import HistoryScreen from "./src/screens/HistoryScreen"
 import ProfileScreen from "./src/screens/ProfileScreen"
 import SettingsScreen from "./src/screens/SettingsScreen"
 import PestScreen from "./src/screens/PestScreen"
+import PestDetectionScreen from "./src/screens/PestDetectionScreen"
 import DiseaseScreen from "./src/screens/DiseaseScreen"
-// import HarvestScreen from './src/screens/HarvestScreen';
+import WeedScreen from "./src/screens/WeedScreen"
+import HarvestScreen from './src/screens/HarvestScreen';
 
 import ForumScreen from './src/screens/ForumScreen';
-import weedScreen from "./src/screens/WeedScreen";
+
 import HerbicideReportScreen from './src/screens/HerbicideReportScreen';
 
 
@@ -83,39 +85,39 @@ const App = () => {
               component={MainTabs}
               options={{ headerShown: false }}
           />
-          {/*<Stack.Screen*/}
-          {/*    name="PestDetection"*/}
-          {/*    components={PestDetectionScreen}*/}
-          {/*    options={{*/}
-          {/*      title: 'Pest Detection',*/}
-          {/*      headerStyle: {*/}
-          {/*        backgroundColor: '#e53935',*/}
-          {/*      },*/}
-          {/*      headerTintColor: '#fff',*/}
-          {/*    }}*/}
-          {/*/>*/}
-          {/*<Stack.Screen*/}
-          {/*    name="Disease"*/}
-          {/*    components={DiseaseScreen}*/}
-          {/*    options={{*/}
-          {/*      title: 'Disease Diagnosis',*/}
-          {/*      headerStyle: {*/}
-          {/*        backgroundColor: '#e53935',*/}
-          {/*      },*/}
-          {/*      headerTintColor: '#fff',*/}
-          {/*    }}*/}
-          {/*/>*/}
-          {/*<Stack.Screen*/}
-          {/*    name="Harvest"*/}
-          {/*    components={HarvestScreen}*/}
-          {/*    options={{*/}
-          {/*      title: 'Smart Harvest',*/}
-          {/*      headerStyle: {*/}
-          {/*        backgroundColor: '#e53935',*/}
-          {/*      },*/}
-          {/*      headerTintColor: '#fff',*/}
-          {/*    }}*/}
-          {/*/>*/}
+          <Stack.Screen
+              name="PestDetection"
+              component={PestScreen}
+              options={{
+              title: 'Pest Detection',
+              headerStyle: {
+              backgroundColor: '#e53935',
+             },
+               headerTintColor: '#fff',
+           }}
+          /> 
+          <Stack.Screen
+            name="Disease"
+              component={DiseaseScreen}
+              options={{
+               title: 'Disease Diagnosis',
+                headerStyle: {
+              backgroundColor: '#e53935',
+           },
+          headerTintColor: '#fff',
+          }}
+          />
+          <Stack.Screen
+            name="Harvest"
+             component={HarvestScreen}
+            options={{
+              title: 'Smart Harvest',
+              headerStyle: {
+                backgroundColor: '#e53935',
+               },
+                headerTintColor: '#fff',
+              }}
+          /> 
           <Stack.Screen
               name="Weed"
               component={WeedScreen}
